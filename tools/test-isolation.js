@@ -3,8 +3,8 @@
 // instead of `ctx.core.VFS.node(...)` works at runtime and nothing else in the
 // repo would notice; this guard is what makes the contract real.
 //
-// Cases 1-3 run against throwaway module bodies, so they are unaffected by the
-// state of src/js. Case 4 scans the real tree and prints how many modules it
+// Cases 1-3 and 5 run against throwaway module bodies, so they are unaffected by
+// the state of src/js. Case 4 scans the real tree and prints how many modules it
 // checked, so a refactor that quietly reduces that to zero is visible.
 //
 // Run:  node tools/test-isolation.js
@@ -16,7 +16,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const manifestLib = require('./lib/manifest');
 const { kernelNames, CTX_FILE: BOOT_FILE } = require('./lib/kernel-names');
-const { declaredFrom, violations, staleNames } = require('./lib/isolation');
+const { declaredFrom, violations, staleNames, ctxCoreReads } = require('./lib/isolation');
 
 let failures = 0;
 function check(n, what, fn) {
@@ -157,9 +157,41 @@ check(4, 'every collected module is checked against the real kernel list', () =>
     (converted === 0 ? ' (none destructure ctx.core yet, so nothing to enforce)' : ''));
 });
 
+/* -- 5. I3: a kernel file must not read ctx.core ----------------------------- */
+check(5, 'a ctx.core read is located in a kernel body, and prose is not a read', () => {
+  // The kernel is ONE module with ONE register() sharing ONE scope, and ctx.core
+  // is not open until the whole kernel has registered, so a kernel file that
+  // destructures it either throws at boot or reads a half-built core. build.js
+  // runs this over every kernel file.
+  const bad = [
+    'function register(ctx) {',
+    '  // the kernel must never read ctx.core, even to check',
+    '  const { VFS } = ctx.core;',
+    '  return { VFS };',
+    '}',
+  ].join('\n');
+
+  const found = ctxCoreReads(bad);
+  assert(found.length === 1,
+    'expected exactly one read, got ' + JSON.stringify(found));
+  assert(found[0].line === 3, 'read was on line ' + found[0].line + ', expected 3');
+  assert(/const \{ VFS \} = ctx\.core/.test(found[0].text),
+    'read text was ' + found[0].text);
+
+  // A file that only MENTIONS ctx.core in a banner, or in a quoted selector, is
+  // not a violation - otherwise the rule could not be written down anywhere.
+  const clean = [
+    '/* ctx.core is assembled from the kernel exports. */',
+    'const SEL = "div.ctx.core-marker";   // literal, not a read',
+    'const w = VFS.node("/", "Desktop");',
+  ].join('\n');
+  assert(ctxCoreReads(clean).length === 0,
+    'prose was reported as a read: ' + JSON.stringify(ctxCoreReads(clean)));
+});
+
 if (failures) {
   console.log('\n' + failures + ' case(s) failed');
   process.exitCode = 1;
 } else {
-  console.log('\n4/4 isolation cases pass');
+  console.log('\n5/5 isolation cases pass');
 }

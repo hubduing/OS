@@ -40,8 +40,6 @@ function declaredFrom(body) {
   return given;
 }
 
-const isComment = (l) => /^\s*(?:\/\/|\/\*|\*)/.test(l);
-
 /* A name preceded by `.` is a property access (ctx.core.VFS), and one followed
    by a word character is a different identifier (VFSx). The lookbehind is what
    stops the declared form from counting as an undeclared reference.
@@ -83,9 +81,6 @@ function stripStrings(line) {
   return out;
 }
 
-/* Every undeclared reference to a kernel name in one module body.
-   `given` is what the module destructured, `names` is ctx.core's surface.
-   Returns {name, line, text} for each hit. */
 /* Is this line inside a block comment? The banner at the top of every file is
    `/* ===...` on one line and its close on another, and the prose between them
    starts at column 0 - so a per-line "does it start with /* or *" test misses
@@ -137,26 +132,52 @@ function commentMask(lines) {
   return mask;
 }
 
+/* Every undeclared reference to a kernel name in one module body.
+   `given` is what the module destructured, `names` is ctx.core's surface.
+   Returns {name, line, text} for each hit. */
 function violations(body, names, given) {
   const compiled = names
     .filter(n => !given.has(n))
     .map(n => ({ name: n, re: referenceRe(n) }));
 
   const out = [];
-  const lines = body.split('\n');
-  const inComment = commentMask(lines);
+  const lines = codeLines(body);
 
-  lines.forEach((raw, i) => {
-    if (inComment[i]) return;
-    if (isComment(raw) || DESTRUCTURE_1.test(raw)) return;   // not a reference
-    // Quotes are blanked before matching so a name inside a string is not a
-    // reference, and a trailing `// ...` is dropped for the same reason.
-    const code = stripStrings(raw).replace(/\/\/.*$/, '');
+  lines.forEach(({ raw, code }, i) => {
+    if (code === '') return;                            // comment-only line
+    if (DESTRUCTURE_1.test(code)) return;               // not a reference
     for (const { name, re } of compiled) {
       if (re.test(code)) out.push({ name, line: i + 1, text: raw.trim() });
     }
   });
   return out;
+}
+
+/* A `/* ... *\/` that opens and closes on ONE line. commentMask only knows the
+   column-0 banner style, so an inline block comment was still read as code -
+   which meant a kernel file documenting the "a kernel never reads ctx.core" rule
+   in a one-line comment would be reported as breaking it. Blanked in place, so
+   code sharing the line survives. Run BEFORE stripStrings, so an apostrophe in a
+   comment cannot open a phantom string literal. */
+function stripInlineComments(line) {
+  return line.replace(/\/\*[\s\S]*?\*\//g, m => ' '.repeat(m.length));
+}
+
+/* The body split into {raw, code} per line, with comments blanked to '' and the
+   contents of string literals and trailing // comments removed.
+
+   Shared with the builder's I3 guard, so "a read of ctx.core" means the same
+   thing in tools/test-isolation.js and in `node build.js --check`: a mention in
+   prose or inside a quoted selector is not a read. */
+function codeLines(body) {
+  const lines = body.split('\n');
+  const inComment = commentMask(lines);
+  return lines.map((raw, i) => ({
+    raw,
+    code: inComment[i]
+      ? ''
+      : stripStrings(stripInlineComments(raw)).replace(/\/\/.*$/, ''),
+  }));
 }
 
 /* Names in `names` that do not appear anywhere in the kernel tree. The list is
@@ -166,4 +187,25 @@ function staleNames(names, kernelText) {
   return names.filter(n => !referenceRe(n).test(kernelText));
 }
 
-module.exports = { declaredFrom, violations, staleNames, stripStrings, referenceRe };
+/* Reads of `ctx.core`, as {line, text}. The builder runs this over every kernel
+   file, because the kernel is ONE module with ONE register(): it reaches its own
+   names lexically, and ctx.core is not even open until the whole kernel has
+   registered. A kernel file that reads it is a bug either way, so this lives
+   here next to the rest of the scanning rather than in build.js, where a test
+   could not reach it.
+
+   Comments and string literals are blanked first, so a module explaining the
+   rule in a banner is not a violation of it. */
+const CTX_CORE_READ = /(?:^|[^\w.$])ctx\s*\.\s*core\b/;
+
+function ctxCoreReads(body) {
+  const out = [];
+  codeLines(body).forEach(({ raw, code }, i) => {
+    if (code !== '' && CTX_CORE_READ.test(code)) out.push({ line: i + 1, text: raw.trim() });
+  });
+  return out;
+}
+
+module.exports = {
+  declaredFrom, violations, staleNames, stripStrings, referenceRe, codeLines, ctxCoreReads,
+};

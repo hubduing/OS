@@ -19,6 +19,7 @@ const vm = require('vm');
 const manifest = require('./tools/lib/manifest');
 const { kernelNames, CTX_FILE: BOOT_FILE, INJECT_MARK, INJECT_IDS_MARK } =
   require('./tools/lib/kernel-names');
+const { ctxCoreReads } = require('./tools/lib/isolation');
 
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
@@ -112,11 +113,18 @@ function groupModules(files, order) {
    happens to load first, which is the hardest kind of bug to trace back to the
    folder that caused it.
 
+   DECLARATIONS ONLY. An earlier version also accepted a bare `register(ctx)`,
+   which matches a CALL as readily as a declaration - so a module that invoked
+   register without defining it passed this check and then failed at boot as a
+   ReferenceError, the exact outcome the check exists to prevent. The third
+   alternative below is a method shorthand, `register(ctx) {`, and the required
+   `{` is what separates it from a call: a call is `register(ctx);`.
+
    Checked in checkJs(), not while emitting: `node build.js` without --check must
    still write a bundle, so that the failure is something you can inspect rather
    than a file that was never produced. */
 const HAS_REGISTER =
-  /(?:^|[^\w.$])(?:function\s+register\b|(?:const|let|var)\s+register\s*=|register\s*\(\s*ctx\b)/m;
+  /(?:^|[^\w.$])(?:function\s+register\b|(?:const|let|var)\s+register\s*=|register\s*\(\s*ctx\s*\)\s*\{)/m;
 
 /* What an error about a module should call it: the id, and enough of its files
    to find it, since "kernel has no register" does not help anyone. Capped: the
@@ -137,12 +145,25 @@ function wrapModule(mod, body) {
     '  KERNEL_CTX.__deps = ' + JSON.stringify(mod.deps) + ';\n' +
     '  var __exports = {};\n\n' +
     body + '\n\n' +
-    '  __exports = register(KERNEL_CTX);\n' +
-    '  KERNEL_CTX.__deps = [];\n' +
+    // finally, not a plain reset: a register() that throws unwinds straight
+    // through here, and leaving __deps pointing at the dead module's
+    // dependencies would hand the next module a widened __deps.
+    '  try {\n' +
+    '    __exports = register(KERNEL_CTX);\n' +
+    '  } finally {\n' +
+    '    KERNEL_CTX.__deps = [];\n' +
+    '  }\n' +
     '  KERNEL_CTX.registry[' + JSON.stringify(mod.id) + '] = __exports || {};\n' +
     '})();\n'
   );
 }
+
+/* The builder tells the bootstrap when the kernel is done, and the bootstrap
+   uses that to assemble and freeze ctx.core. It cannot be inlined above: the
+   core is assembled from what the kernel's register() RETURNED, and the wrapper
+   only stores that after the call. */
+const KERNEL_DONE = '/* KERNEL PHASE COMPLETE - ctx.core opens here, and not before. */\n' +
+  'KERNEL_CTX.__kernelDone();\n';
 
 /* The kernel-name list is computed here and nowhere else, then injected into
    00-kernel-ctx.js as literals. The bundle never recomputes either, so this
@@ -201,6 +222,21 @@ function build() {
       kernelIds
     );
 
+  // ctx.core opens the moment the kernel phase ends, not before: it is assembled
+  // from what the kernel module's register() returned, and the wrapper stores
+  // that only after the call. The marker goes after the LAST kernel wrapper and
+  // before the first package/app, so every app sees a core that is already
+  // frozen and already checked against the injected KERNEL_NAMES.
+  const lastKernel = modules.reduce(
+    (last, m, i) => (kernelIds.indexOf(m.id) === -1 ? last : i),
+    -1
+  );
+  if (lastKernel === -1) {
+    throw new Error(
+      'no kernel module collected from ' + kernelDir + ' - KERNEL_CTX would never ' +
+      'be closed and every ctx.core read would throw at boot'
+    );
+  }
   const bodies = modules.map(m => {
     // The bootstrap file is emitted above, unwrapped; keep it out of the body.
     const body = concat(
@@ -211,7 +247,9 @@ function build() {
     return { mod: m, body };
   });
 
-  const js = [bootBody].concat(bodies.map(b => wrapModule(b.mod, b.body))).join('\n\n');
+  const parts = [bootBody].concat(bodies.map(b => wrapModule(b.mod, b.body)));
+  parts.splice(lastKernel + 2, 0, KERNEL_DONE);   // +1 to step past bootBody
+  const js = parts.join('\n\n');
 
   const stamp =
     '<!-- Built by build.js from src/ — edit the sources, not this file. -->\n';
@@ -236,6 +274,7 @@ function build() {
   return {
     out,
     modules: bodies,
+    kernelIds,
     cssFiles: readDir(path.join(SRC, 'css'), '.css').length,
     jsFiles: jsFiles.length,
   };
@@ -243,7 +282,7 @@ function build() {
 
 /* ---- sanity check: does the bundled JS parse, and does every module have
    the register its wrapper calls? ----------------------------------------- */
-function checkJs(html, modules) {
+function checkJs(html, modules, kernelIds) {
   // The contract check runs first and names the module, which is the actionable
   // part of the failure. A missing register also breaks the parse below in a way
   // that reads as a bundle bug rather than a module bug.
@@ -252,6 +291,35 @@ function checkJs(html, modules) {
       throw new Error(
         moduleLabel(mod) + ' has no register() declaration - every module must ' +
         'define register(ctx) for the generated wrapper to call'
+      );
+    }
+  }
+
+  // I3: the kernel is ONE module with ONE register(), sharing one lexical scope,
+  // and ctx.core is not open until that module has registered. A kernel file that
+  // reaches for ctx.core therefore reads a core that does not exist yet - it
+  // throws at boot - and if it ever did not throw it would be reading a core
+  // assembled from the module still in the middle of registering itself. Either
+  // way the fix is wrong: intra-kernel access stays lexical, and only packages
+  // and apps destructure ctx.core. Enforced here so the rule cannot rot.
+  //
+  // Scanned per file, not against the concatenated module body: the kernel is 33
+  // files and "line 900 of the kernel" names nothing. The bootstrap is exempt,
+  // and does not even need to be - it is emitted outside any wrapper (see
+  // bootBody above) so it is never in a module body. The scan itself lives in
+  // tools/lib/isolation.js next to the rest of the scanning, so a test can
+  // reach the code this runs.
+  for (const { mod } of modules || []) {
+    if (kernelIds.indexOf(mod.id) === -1) continue;
+    for (const f of mod.files) {
+      if (f.file === BOOT_FILE) continue;
+      const hit = ctxCoreReads(fs.readFileSync(f.abs, 'utf8'))[0];
+      if (!hit) continue;
+      throw new Error(
+        mod.id + '/' + f.file + ':' + hit.line + ' reads ctx.core (' + hit.text +
+        ') - the kernel is ONE module sharing ONE scope, so it reaches its own ' +
+        'names lexically, and build.js does not open ctx.core until the whole ' +
+        'kernel has registered. Only packages and apps destructure ctx.core.'
       );
     }
   }
@@ -281,11 +349,11 @@ function checkJs(html, modules) {
 }
 
 const t0 = Date.now();
-const { out, modules, cssFiles, jsFiles } = build();
+const { out, modules, kernelIds, cssFiles, jsFiles } = build();
 const lineCount = out.split('\n').length;
 
 if (process.argv.includes('--check')) {
-  const r = checkJs(out, modules);
+  const r = checkJs(out, modules, kernelIds);
   console.log(`check ok — JS ${r.js} lines, CSS ${r.css} lines, both parse`);
 }
 

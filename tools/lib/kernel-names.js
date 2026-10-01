@@ -7,10 +7,14 @@
    hardcoded path: the tree moves from src/js to src/kernel later, and a path
    baked in here would make this file wrong the moment it did.
 
-   build.js injects the result into src/00-kernel-ctx.js as a literal array, so
-   the builder is the single source of truth. Nothing here defines a runtime
-   global and nothing in the bundle recomputes the list — the script and the
-   bundle cannot disagree because only one of them derives it.
+   build.js injects the result into the kernel bootstrap (src/js/00-kernel-ctx.js
+   as of this tree; the path follows manifest.kernel.dir, not this comment) as a
+   literal array, so the builder is the single source of truth. Nothing here
+   defines a runtime global and nothing in the bundle recomputes the list — the
+   script and the bundle cannot disagree because only one of them derives it.
+   The injected literal is not decoration either: the bootstrap refuses to open
+   ctx.core until the assembled core covers every name in it, so a kernel
+   register() that forgets to return something fails at boot by name.
 
    Scope of the scan, deliberately narrow:
      - top level only: a declaration must start at column 0. Every file in this

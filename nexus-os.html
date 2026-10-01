@@ -935,7 +935,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
    by tools/lib/kernel-names.js. The builder is the single source of
    truth for that list, so this file and tools/test-isolation.js cannot
    disagree about what ctx.core holds. tools/test-isolation.js checks
-   every module against exactly this list.
+   every module against exactly this list, and __kernelDone() below
+   enforces it at boot.
    ------------------------------------------------------------ */
 const KERNEL_NAMES = ["$","$$","ACCENTS","ACH_LIST","API","APPS","Achievements","Audio2","BOOT_LINES","Bus","Clipboard","DAYS","DEFAULT_SETTINGS","DESKTOP_APPS","Diag","EXT_ICON","Eggs","GAMES","HL","ICONS","IDEAS_TEXT","INSTRUMENTS","KONAMI","LS","MONTHS","NEXUS","NEXUS_FORTUNES","NEXUS_HELP","NEXUS_JOKES","NEXUS_PAGES","Notify","Pinned","Reel","S","SECRET_TEXT","SETTING_CHOICES","SYNTH_STEP","Subs","Synth","THEMES","TRACKS","VFS","WALLPAPERS","WELCOME_TEXT","WM","Wall","ago","applySettings","applyTheme","boot","buildRacer","buildSnake","cascade","clamp","clockTimer","closeCtx","closeDialog","confirmBox","ctxMenu","ctxOutside","dialog","dismiss","el","esc","extOf","filePicker","finishBoot","firstRunIntro","fmtBytes","fmtDateShort","fmtDay","fmtDayLong","fmtDur","fmtHM","fmtHMS","fmtStamp","formatLap","glitch","hexA","iconForNode","init","isImageNode","kIdx","konami","launchLine","lockScreen","modalResolve","openCtx","pad","prompt2","random","renderDesktop","renderDesktopFiles","renderStart","renderTray","resolveApp","screenshot","setSetting","showProps","shutdown","startClock","startOpen","storageBytes","tile","toast","toggleStart","trackStorage","typeName"];
 
@@ -962,12 +963,13 @@ const KERNEL_IDS = ["kernel"];
    wrapper: once a module body is inside the generated IIFE, nothing in it is
    reachable from outside by name at all.
 
-   KERNEL_NAMES stays the authority on WHICH names belong to the kernel;
-   this only says where their values come from. A name listed but never
-   registered is absent from ctx.core and reads as undefined at the call site,
-   which is the failure mode tools/test-isolation.js case 3 exists to prevent. */
-let __core = null;
-function readCore() {
+   The assembly happens in __kernelDone(), which build.js emits immediately
+   after the last kernel module - not on first read. A lazy build was the bug
+   this replaced: the wrapper stores a module's exports in the registry only
+   AFTER register() returns, so a module whose own register() read ctx.core
+   would assemble a core out of an empty registry, freeze {}, and every later
+   module would inherit it with no error anywhere. */
+function assembleCore() {
   const out = {};
   for (const id of KERNEL_IDS) {
     const mod = KERNEL_CTX.registry[id];
@@ -977,19 +979,33 @@ function readCore() {
   return out;
 }
 
-/* Frozen, so a module cannot swap a kernel service out from under the others.
-   KERNEL_CTX itself is NOT frozen: the generated wrapper assigns __deps per
+/* The frozen core, or null until the kernel has finished registering. A core
+   is never published half-built: see assembleCore(). */
+let __core = null;
+
+/* Names listed in the injected literal that the kernel did not actually hand
+   back. Reported by name, because "ctx.core is wrong" is not actionable and
+   "ctx.core has no Audio2" is. */
+function missingKernelNames(core) {
+  return KERNEL_NAMES.filter(n => !Object.prototype.hasOwnProperty.call(core, n));
+}
+
+const PREMATURE =
+  'ctx.core was read before the kernel finished registering. build.js emits ' +
+  'KERNEL_CTX.__kernelDone() right after the last kernel module, and ctx.core ' +
+  'stays closed until then. The usual cause is a register() that destructures ' +
+  'ctx.core: the kernel is ONE module sharing ONE scope and reaches its own ' +
+  'names lexically, so only packages and apps destructure ctx.core.';
+
+/* KERNEL_CTX itself is NOT frozen: the generated wrapper assigns __deps per
    module, and a frozen property assignment fails silently outside strict mode
    - the wrapper runs with 'use strict', but freezing ctx buys nothing here and
    costs a failure mode that is invisible when it happens. registry stays
-   mutable because filling it is the whole point. */
+   mutable because filling it is the whole point, and __kernelDone stays
+   callable because the builder is what calls it. */
 const KERNEL_CTX = {
   get core() {
-    // Assembled on first read, not inline above: the kernel modules have not
-    // registered yet when this file runs, so an eager read would see an empty
-    // registry. Every module reads ctx.core exactly once, so the laziness is not
-    // observable.
-    if (__core === null) __core = Object.freeze(readCore());
+    if (__core === null) throw new Error(PREMATURE);
     return __core;
   },
 
@@ -997,16 +1013,46 @@ const KERNEL_CTX = {
   registry: {},
 
   /* Internal. The generated wrapper sets this to the current module's declared
-     deps immediately before register(KERNEL_CTX) and clears it after, so a
-     module can only reach what its manifest entry declared. A module never
-     reads this slot itself; the name is prefixed to make that obvious. */
+     deps immediately before register(KERNEL_CTX) and clears it in a finally
+     after, so a module can only reach what its manifest entry declared. A
+     module never reads this slot itself; the name is prefixed to make that
+     obvious. */
   __deps: [],
 
+  /* Internal. Called by the builder once the last kernel module has
+     registered. This is the only place ctx.core is built, and it refuses to
+     publish one that does not cover KERNEL_NAMES - the injected literal is
+     what turns "a kernel register() returned {}" from a boot that limps along
+     with every service undefined into an error naming the gaps. */
+  __kernelDone() {
+    const core = assembleCore();
+    const missing = missingKernelNames(core);
+    if (missing.length) {
+      const CAP = 12;
+      const shown = missing.slice(0, CAP).join(', ');
+      const more = missing.length > CAP ? ', +' + (missing.length - CAP) + ' more' : '';
+      throw new Error(
+        'ctx.core is missing ' + missing.length + ' of the ' + KERNEL_NAMES.length +
+        ' kernel name(s) build.js injected: ' + shown + more +
+        '. A kernel register() has to return every name it declares - the list ' +
+        'is derived from the kernel files, so a name that is declared there and ' +
+        'not exported here is a gap, not a spare.'
+      );
+    }
+    __core = Object.freeze(core);
+    return __core;
+  },
+
+  /* use CLOSES OVER KERNEL_CTX rather than reading `this`. `const { use } = ctx`
+     is the pattern the whole modular refactor teaches, and it hands `use` a
+     plain function whose `this` is undefined; reading this.__deps there died
+     with "Cannot read properties of undefined" in strict mode, which is both
+     the wrong error and the least useful one. */
   use(id) {
-    if (this.__deps.indexOf(id) === -1) {
+    if (KERNEL_CTX.__deps.indexOf(id) === -1) {
       throw new Error('undeclared dependency: ' + id);
     }
-    const mod = this.registry[id];
+    const mod = KERNEL_CTX.registry[id];
     if (!mod) throw new Error('unknown dependency: ' + id + ' (declared but not registered)');
     return mod;
   },
@@ -8254,10 +8300,17 @@ const Subs={
   }
 };
 
-  __exports = register(KERNEL_CTX);
-  KERNEL_CTX.__deps = [];
+  try {
+    __exports = register(KERNEL_CTX);
+  } finally {
+    KERNEL_CTX.__deps = [];
+  }
   KERNEL_CTX.registry["kernel"] = __exports || {};
 })();
+
+
+/* KERNEL PHASE COMPLETE - ctx.core opens here, and not before. */
+KERNEL_CTX.__kernelDone();
 
 </script>
 </body>
