@@ -164,23 +164,29 @@ Expected: FAIL — cannot find `tools/lib/kernel-names.js`.
 
 - [ ] **Step 3: Write `tools/lib/kernel-names.js`**
 
-Derive the list by scanning `src/kernel/*.js` (after Task 4; before it, `src/js/*.js`) for top-level `const|let|var|function NAME =` and `function NAME(` declarations, excluding `APPS` members and file-local IIFE names. Returned sorted and unique.
+Derive the list by scanning the kernel directory named in the manifest (`manifest.kernel.dir`) for top-level `const|let|var NAME =`, `function NAME(` and `NAME =` declarations, excluding `APPS` members and names declared inside an IIFE. Returned sorted and unique. Never hardcode `src/kernel` or `src/js` — Task 2 runs before the tree moves, and a hardcoded path would make this task depend on Task 4.
 
 - [ ] **Step 4: Create `src/00-kernel-ctx.js`**
 
 Must be concatenated **first**, before `01-core.js`, so `ctx.core` can be frozen over a fully populated global set. Because the kernel is a real shared scope, build it by reading the names off the scope at that point:
 
 ```js
+/* KERNEL_NAMES is a literal injected by build.js at emit time — the builder
+   computes it with tools/lib/kernel-names.js. */
 const core = {};
 for (const n of KERNEL_NAMES) { if (n in globalThis) core[n] = globalThis[n]; }
-const KERNEL_CTX = Object.freeze({
+const KERNEL_CTX = {
   core: Object.freeze(core),
-  registry: Object.freeze({}),
-  use(id) { /* throw unless current module declared it */ },
-});
+  registry: {},
+  __deps: [],                       // internal; modules never read this
+  use(id) { /* throw unless __deps includes id */ },
+};
 ```
 
-`use` needs the calling module's `deps`; the generated wrapper passes them, so `use` closes over them via a module-local set by the wrapper before `register` runs.
+`KERNEL_CTX` itself is **not** frozen — freezing would make the per-module
+`use` binding unassignable, and the assignment would fail silently outside
+strict mode. `ctx.core` is frozen, so a module cannot replace a service; that is
+the guarantee worth having. `registry` stays mutable because modules fill it.
 
 - [ ] **Step 5: Make `build.js` emit the IIFE wrapper**
 
@@ -190,16 +196,18 @@ For each module in `collect()` order, emit:
 /* MODULE: <id>  dir: <dir> */
 (function () {
   'use strict';
-  var __deps = ['a','b'];
+  KERNEL_CTX.__deps = ['a','b'];
   var __exports = {};
-  KERNEL_CTX.use = function (id) { /* reads __deps, throws otherwise */ };
   /* …concatenated files, verbatim… */
   __exports = register(KERNEL_CTX);
+  KERNEL_CTX.__deps = [];
   KERNEL_CTX.registry[<id>] = __exports || {};
 })();
 ```
 
 `register` must be declared in the module's concatenated body. Emit a build error naming the module if the concatenated text lacks a `register` declaration, so a folder that forgets it fails at build time.
+
+Also inject the literal `KERNEL_NAMES = [...]` array at the top of `00-kernel-ctx.js`, computed by `build.js` via `tools/lib/kernel-names.js`. The builder is the single source of truth for that list; the script and the bundle must not compute it independently.
 
 - [ ] **Step 6: Run `node build.js --check`**
 
@@ -334,16 +342,58 @@ git push origin main
 
 ---
 
-### Task 5: The track guard reads the real bundle
+# Phase 1 — Pilot
 
-`tools/test-songs.js` runs raw files through `vm.runInContext` and pulls `Synth, TRACKS, INSTRUMENTS` off the vm global. Task 2's IIFE makes those names private, so the guard would find nothing and report green — Review Focus item 5.
+Two applications, chosen to be opposites: `calculator` is small with no dependencies; `music` is large and depends on two packages. If the contract is wrong, it is wrong in a way visible from both.
+
+### Task 5: `packages/synth`, `packages/songs`, `packages/subtitles`
+
+**Files:**
+- Create: `src/packages/synth/entry.js` (from `src/kernel/28-synth.js`)
+- Create: `src/packages/songs/data.js` (from `src/kernel/29-songs.js`)
+- Create: `src/packages/subtitles/entry.js` (from `src/kernel/32-subtitles.js`)
+- Modify: `src/manifest.js`, delete the three kernel files
+
+**Interfaces:**
+- Consumes: `ctx.core` (Task 2).
+- Produces: registry entries `synth` exporting `{ Synth }`, `songs` exporting `{ TRACKS, INSTRUMENTS }`, `subtitles` exporting `{ Subs }`. `songs` declares `deps: ['synth']`.
+
+- [ ] **Step 1: Move and declare the dependencies**
+
+`songs` genuinely needs `INSTRUMENTS` from `synth`, which the current file order gave for free. Declare it and read it via `ctx.use('synth')`.
+
+- [ ] **Step 2: Update the manifest, delete the old kernel files**
+
+```js
+packages: [
+  { id:'synth', dir:'packages/synth', deps:[], files:['entry.js'] },
+  { id:'songs', dir:'packages/songs', deps:['synth'], files:['data.js'] },
+  { id:'subtitles', dir:'packages/subtitles', deps:[], files:['entry.js'] },
+],
+```
+
+- [ ] **Step 3: Run `npm test`**
+
+Expected: green. `test-songs` still reads raw files at this point — Task 6 teaches it to read the packages through the real bundle.
+
+- [ ] **Step 4: Commit and push**
+
+```bash
+git add -A && git commit -m "refactor: synth, songs and subtitles become packages" && git push origin main
+```
+
+---
+
+### Task 6: The track guard reads the real bundle
+
+`tools/test-songs.js` runs raw files through `vm.runInContext` and pulls `Synth, TRACKS, INSTRUMENTS` off the vm global. Task 2's IIFE makes those names private, so the guard would find nothing and report green — Review Focus item 5. Task 5 must run first: these packages have to exist before the guard can read them.
 
 **Files:**
 - Modify: `build.js`, `tools/test-songs.js`
 - Create: `tools/lib/bundle.js`
 
 **Interfaces:**
-- Consumes: `collect()` (Task 1), the emitted wrapper (Task 2).
+- Consumes: `collect()` (Task 1), the emitted wrapper (Task 2), the `synth`/`songs` packages (Task 5).
 - Produces:
   - `build.js --emit-test-bundle <dir>` — writes one JS file per module, each already wrapped, plus an `index.js` that registers them all and assigns `globalThis.__exports = KERNEL_CTX.registry`.
   - `tools/lib/bundle.js` — `loadExports(root?) => {Synth, TRACKS, INSTRUMENTS, …}`, invoking the above and returning the registry.
@@ -372,48 +422,6 @@ Then revert and confirm green. A guard that cannot fail is the exact defect this
 git add build.js tools/lib/bundle.js tools/test-songs.js
 git commit -m "test: track guard loads the real wrapped bundle instead of raw files"
 git push origin main
-```
-
----
-
-# Phase 1 — Pilot
-
-Two applications, chosen to be opposites: `calculator` is small with no dependencies; `music` is large and depends on two packages. If the contract is wrong, it is wrong in a way visible from both.
-
-### Task 6: `packages/synth`, `packages/songs`, `packages/subtitles`
-
-**Files:**
-- Create: `src/packages/synth/entry.js` (from `src/kernel/28-synth.js`)
-- Create: `src/packages/songs/data.js` (from `src/kernel/29-songs.js`)
-- Create: `src/packages/subtitles/entry.js` (from `src/kernel/32-subtitles.js`)
-- Modify: `src/manifest.js`, delete the three kernel files
-
-**Interfaces:**
-- Consumes: `ctx.core` (Task 2).
-- Produces: registry entries `synth` exporting `{ Synth }`, `songs` exporting `{ TRACKS, INSTRUMENTS }`, `subtitles` exporting `{ Subs }`. `songs` declares `deps: ['synth']`.
-
-- [ ] **Step 1: Move and declare the dependencies**
-
-`songs` genuinely needs `INSTRUMENTS` from `synth`, which the current file order gave for free. Declare it and read it via `ctx.use('synth')`.
-
-- [ ] **Step 2: Update the manifest, delete the old kernel files**
-
-```js
-packages: [
-  { id:'synth', dir:'packages/synth', deps:[], files:['entry.js'] },
-  { id:'songs', dir:'packages/songs', deps:['synth'], files:['data.js'] },
-  { id:'subtitles', dir:'packages/subtitles', deps:[], files:['entry.js'] },
-],
-```
-
-- [ ] **Step 3: Run `npm test`**
-
-Expected: green — `test-songs` now reads the packages through the real bundle, and `test-audio-mute` finds `synth` by manifest id.
-
-- [ ] **Step 4: Commit and push**
-
-```bash
-git add -A && git commit -m "refactor: synth, songs and subtitles become packages" && git push origin main
 ```
 
 ---
