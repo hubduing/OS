@@ -16,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
+const manifest = require('./tools/lib/manifest');
+
 const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
 const OUT = path.join(ROOT, 'nexus-os.html');
@@ -25,28 +27,37 @@ const readDir = (dir, ext) =>
     ? fs.readdirSync(dir).filter(f => f.endsWith(ext)).sort()
     : [];
 
-function banner(file) {
-  const name = file.split(path.sep).pop();
+/* `label` is the path shown in the banner, relative to src/, so that it reads
+   `src/js/01-core.js` no matter which directory the file actually came from. */
+function banner(label) {
+  const name = label.split(path.sep).pop();
   const title = name.replace(/^\d+-/, '').replace(/\.[^.]+$/, '');
   const rule = '='.repeat(66);
   return (
     '\n/* ' + rule + '\n' +
     '   ' + title.toUpperCase() + '\n' +
-    '   src/' + file.split(path.sep).join('/') + '\n' +
+    '   src/' + label.split(path.sep).join('/') + '\n' +
     '   ' + rule + ' */'
   );
 }
 
-function concat(dir, ext) {
-  return readDir(dir, ext)
-    .map(f => {
-      const p = path.join(dir, f);
-      const body = fs.readFileSync(p, 'utf8').replace(/\s*$/, '');
-      if (ext === '.js') assertBalanced(p, body);
-      return banner(path.join(path.basename(dir), f)) + '\n\n' + body;
+function concat(items) {
+  return items
+    .map(({ abs, label }) => {
+      const body = fs.readFileSync(abs, 'utf8').replace(/\s*$/, '');
+      if (abs.endsWith('.js')) assertBalanced(abs, body);
+      return banner(label) + '\n\n' + body;
     })
     .join('\n\n');
 }
+
+const concatDir = (dir, ext) =>
+  concat(
+    readDir(dir, ext).map(f => ({
+      abs: path.join(dir, f),
+      label: path.join(path.basename(dir), f),
+    }))
+  );
 
 /* Guard: a module must not end in the middle of a column-0 block comment, and
    must not leave a dangling `/*`. Banner comments always start at column 0 and
@@ -69,8 +80,15 @@ function assertBalanced(file, body) {
 
 function build() {
   const shell = fs.readFileSync(path.join(SRC, 'shell.html'), 'utf8');
-  const css = concat(path.join(SRC, 'css'), '.css');
-  const js = concat(path.join(SRC, 'js'), '.js');
+  const css = concatDir(path.join(SRC, 'css'), '.css');
+
+  // JS comes from the manifest: kernel files in filename order, then every
+  // package and app file in dependency order. The manifest is validated against
+  // the disk inside collect(), so a typo fails here rather than shipping less.
+  const jsFiles = manifest.collect(ROOT);
+  const js = concat(
+    jsFiles.map(f => ({ abs: f.abs, label: path.relative(SRC, f.abs) }))
+  );
 
   const stamp =
     '<!-- Built by build.js from src/ — edit the sources, not this file. -->\n';
@@ -80,16 +98,23 @@ function build() {
   out = out.replace('<script>', () => '<script>\n' + stamp);
   if (!out.endsWith('\n')) out += '\n';
 
-  // Every src/ file must actually be included, or a typo silently drops code.
-  for (const sub of ['css', 'js']) {
-    for (const f of readDir(path.join(SRC, sub), '.' + sub)) {
-      const marker = 'src/' + sub + '/' + f;
-      if (!out.includes(marker)) throw new Error(`${marker} is not referenced by the build`);
-    }
+  // Every collected source file must actually be included, or a manifest entry
+  // could name a file and silently drop it from the bundle.
+  for (const f of jsFiles) {
+    const marker = 'src/' + path.relative(SRC, f.abs).split(path.sep).join('/');
+    if (!out.includes(marker)) throw new Error(`${marker} is not referenced by the build`);
+  }
+  for (const f of readDir(path.join(SRC, 'css'), '.css')) {
+    const marker = 'src/css/' + f;
+    if (!out.includes(marker)) throw new Error(`${marker} is not referenced by the build`);
   }
 
   fs.writeFileSync(OUT, out, 'utf8');
-  return { out, cssFiles: readDir(path.join(SRC, 'css'), '.css').length, jsFiles: readDir(path.join(SRC, 'js'), '.js').length };
+  return {
+    out,
+    cssFiles: readDir(path.join(SRC, 'css'), '.css').length,
+    jsFiles: jsFiles.length,
+  };
 }
 
 /* ---- optional sanity check: does the bundled JS actually parse? --------- */
