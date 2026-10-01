@@ -83,7 +83,7 @@ Export `load(root)` and `collect(root)`.
 
 - [ ] **Step 4: Write `src/manifest.js` describing the current tree**
 
-Phase 0 must describe reality, not the target. One entry per current file, all with `deps: []`, so the graph is flat and the order matches today's filename order:
+Phase 0 must describe reality, not the target. The tree is still flat, so the manifest collapses everything into the single `kernel` entry and leaves `packages`/`apps` empty. The graph is flat and the order matches today's filename order:
 
 ```js
 kernel: { dir: 'src/js', css: null, js: '*.js' },
