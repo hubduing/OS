@@ -162,32 +162,63 @@ function load(root) {
 
 /* Directories on disk that hold JS but that no manifest entry points at.
    A directory counts as an orphan when it, or anything nested under it, holds
-   a .js file — an empty placeholder directory is harmless. */
+   a .js file — an empty placeholder directory is harmless.
+
+   Walks the whole tree under src/ instead of looking only at the immediate
+   children of a few containers. The previous version looked inside src/ and the
+   parent of each declared directory, so it reported src/apps as an unlisted
+   directory the moment src/apps/calculator was declared: the parent of a
+   declared dir was never itself in `known`. That passed only while every module
+   sat directly in src/, which is the flat Phase 0 shape. */
 function orphanDirs(root, declared) {
   const known = new Set(declared.map(d => path.resolve(root, d)));
+  const srcDir = path.resolve(path.join(root, 'src'));
 
-  const carriesJs = (dir) => {
+  // The deepest directory holding a .js file that no manifest entry accounts
+  // for, or null. Recursion does NOT descend into accounted-for directories: a
+  // container like src/apps looks like it "carries JS" purely because its
+  // declared children do, and reporting that is the false positive this
+  // function is being fixed for.
+  function findUnaccounted(dir) {
     for (const f of fs.readdirSync(dir)) {
       const p = path.join(dir, f);
-      if (isDir(p) ? carriesJs(p) : f.endsWith('.js')) return true;
+      if (isDir(p)) {
+        if (accountedFor(p)) continue;
+        const deeper = findUnaccounted(p);
+        if (deeper) return deeper;
+      } else if (f.endsWith('.js')) {
+        return dir;
+      }
     }
-    return false;
-  };
+    return null;
+  }
 
-  // Containers worth looking inside: src/ itself, and the parent of every
-  // declared directory (so src/apps/ is scanned once its children are listed).
-  const containers = new Set([path.join(root, 'src')]);
-  for (const d of declared) containers.add(path.dirname(path.resolve(root, d)));
-
-  const orphans = [];
-  for (const c of containers) {
-    if (!isDir(c)) continue;
-    for (const name of fs.readdirSync(c).sort()) {
-      const p = path.join(c, name);
-      if (!isDir(p) || known.has(path.resolve(p))) continue;
-      if (carriesJs(p)) orphans.push(posix(path.relative(root, p)));
+  // Accounted for when the directory is declared, when an ANCESTOR is declared,
+  // or when it only holds directories that are themselves accounted for. That
+  // last clause is what makes `src/apps` a container rather than an orphan once
+  // its children are listed.
+  function accountedFor(dir) {
+    for (let p = path.resolve(dir); ; p = path.dirname(p)) {
+      if (known.has(p)) return true;
+      if (p === srcDir) return false;
     }
   }
+
+  const orphans = [];
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir).sort()) {
+      const p = path.join(dir, name);
+      if (!isDir(p) || accountedFor(p)) continue;
+      // Reported at the deepest directory that actually holds the unaccounted
+      // JS, not at the container above it: "src/apps" would send you looking in
+      // a folder that is entirely declared, while "src/apps/rogue" names the
+      // thing that is not in the manifest.
+      const found = findUnaccounted(p);
+      if (found) orphans.push(posix(path.relative(root, found)));
+      else walk(p);                          // a pure container: look inside
+    }
+  };
+  if (isDir(srcDir)) walk(srcDir);
   return orphans;
 }
 

@@ -186,9 +186,47 @@ check(7, 'the real src/manifest.js loads and every listed file exists', () => {
   assert(Array.isArray(m.cssLate), 'cssLate is not an array');
 });
 
+/* 8. intermediate containers are not orphans ------------------------------- */
+check(8, 'a declared src/apps/calculator does not make src/apps an orphan', () => {
+  const good = fixture(
+    {
+      kernel: { dir: 'src/js', css: null, js: '*.js' },
+      cssLate: [],
+      packages: [{ id: 'synth', dir: 'src/packages/synth', deps: [], files: ['entry.js'] }],
+      apps: [{ id: 'calculator', dir: 'src/apps/calculator', deps: [], files: ['entry.js'] }],
+    },
+    Object.assign(KERNEL(['01-core.js']), {
+      'src/packages/synth': ['entry.js'],
+      'src/apps/calculator': ['entry.js'],
+    })
+  );
+  // src/apps and src/packages hold no JS of their own; they are containers, and
+  // the scan must see through them rather than flag them as unlisted.
+  const files = lib.collect(good);
+  assert(files.length === 3, 'collect() returned ' + files.length + ' files, expected 3');
+
+  // A genuine orphan one level down is still caught: seeing through containers
+  // must not become a loophole that lets anything undeclared through.
+  const rogue = fixture(
+    {
+      kernel: { dir: 'src/js', css: null, js: '*.js' },
+      cssLate: [],
+      packages: [{ id: 'synth', dir: 'src/packages/synth', deps: [], files: ['entry.js'] }],
+      apps: [{ id: 'calculator', dir: 'src/apps/calculator', deps: [], files: ['entry.js'] }],
+    },
+    Object.assign(KERNEL(['01-core.js']), {
+      'src/packages/synth': ['entry.js'],
+      'src/apps/calculator': ['entry.js'],
+      'src/apps/rogue': ['entry.js'],
+    })
+  );
+  const e = throws(/not listed/i, () => lib.collect(rogue), 'nested orphan');
+  assert(/rogue/.test(e.message), 'message was ' + e.message);
+});
+
 if (failures) {
   console.log('\n' + failures + ' case(s) failed');
   process.exitCode = 1;
 } else {
-  console.log('\n7/7 manifest cases pass');
+  console.log('\n8/8 manifest cases pass');
 }
