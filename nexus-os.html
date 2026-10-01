@@ -985,9 +985,13 @@ let __core = null;
 
 /* Names listed in the injected literal that the kernel did not actually hand
    back. Reported by name, because "ctx.core is wrong" is not actionable and
-   "ctx.core has no Audio2" is. */
+   "ctx.core has no Audio2" is.
+
+   Presence is not enough: a kernel export written as `{ VFS: undefined }` would
+   pass a hasOwnProperty check and then hand every module an undefined service at
+   the call site. A name the caller needs must have a real value. */
 function missingKernelNames(core) {
-  return KERNEL_NAMES.filter(n => !Object.prototype.hasOwnProperty.call(core, n));
+  return KERNEL_NAMES.filter(n => core[n] === undefined);
 }
 
 const PREMATURE =
