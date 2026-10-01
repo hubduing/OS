@@ -1,0 +1,25 @@
+{
+  "name": "nexus-os",
+  "version": "4.2.1",
+  "private": true,
+  "description": "NEXUS OS — a browser-based desktop environment shipped as one self-contained HTML file. Sources are modular; the deliverable is generated.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.js",
+    "check": "node build.js --check",
+    "test": "node tools/test-build-guard.js && node tools/test-audio-mute.js && node tools/test-songs.js",
+    "test:audio": "node tools/test-audio-mute.js",
+    "test:build": "node tools/test-build-guard.js",
+    "test:songs": "node tools/test-songs.js",
+    "dev": "node build.js --check && node tools/serve.js",
+    "serve": "node tools/serve.js",
+    "sizes": "node tools/sizes.js",
+    "peek": "node tools/peek.js",
+    "fix:boundaries": "node tools/fix-boundaries.js",
+    "split": "node tools/split.js",
+    "extract": "node tools/extract.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

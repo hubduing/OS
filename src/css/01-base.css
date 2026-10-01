@@ -1,0 +1,36 @@
+/* ============================================================
+   NEXUS OS — single file operating system
+   ============================================================ */
+:root{
+  --accent:#37e0ff;
+  --accent2:#b06bff;
+  --accent3:#ff4d9d;
+  --win-bg:rgba(14,18,30,.78);
+  --win-bg-solid:#0e1220;
+  --win-border:rgba(255,255,255,.14);
+  --win-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05) inset;
+  --blur:18px;
+  --opacity:1;
+  --anim:1;
+  --taskbar-pos:bottom;
+  --icon-size:88px;
+  --radius:14px;
+  --font:'Segoe UI Variable Display','Segoe UI',Inter,system-ui,-apple-system,sans-serif;
+  --mono:'Cascadia Code','JetBrains Mono',Consolas,'Courier New',monospace;
+  --text:#e8f1ff;
+  --muted:#8ea0bd;
+  --ok:#3ddc84;
+  --warn:#ffc857;
+  --err:#ff5c72;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#05070d;color:var(--text);font-family:var(--font);font-size:14px;user-select:none}
+body.no-anim *{animation:none!important;transition:none!important}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{background:none;border:none;cursor:pointer}
+input,textarea,select{outline:none}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:20px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.28);background-clip:padding-box}
+.sel{user-select:text}

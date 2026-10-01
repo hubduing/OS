@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>NEXUS OS</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body class="">
+<div id="shutdownScreen"><div>INITIATING SHUTDOWN…</div><div id="sdMsg" style="opacity:.6">Closing user space</div></div>
+
+<div id="boot">
+  <div id="bootGlow"></div>
+  <div id="bootLogo">NEXUS</div>
+  <div id="bootSub">Nexus BIOS v4.2.1</div>
+  <div id="bootLog"></div>
+  <div id="bootBarWrap"><div id="bootBar"></div></div>
+  <div id="bootPct">LOADING 0%</div>
+</div>
+
+<div id="wall"></div>
+<div id="icons"></div>
+<div id="snapHint"></div>
+<div id="windows"></div>
+
+<div id="taskbar">
+  <button id="startBtn" title="Start (Win / Ctrl+Esc)">
+    <svg class="lg" viewBox="0 0 24 24"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#37e0ff"/><stop offset="1" stop-color="#b06bff"/></linearGradient></defs><path d="M12 2 3 7v10l9 5 9-5V7z" fill="none" stroke="url(#lg1)" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" fill="url(#lg1)"/></svg>
+    <b>START</b>
+  </button>
+  <button id="searchBtn" title="Search (Win+S)">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span>Search</span>
+  </button>
+  <div id="taskItems"></div>
+  <div id="tray" title="System tray">
+    <div class="trayIco" id="trayNet" title="Network: Connected"></div>
+    <div class="trayIco" id="trayVol" title="Volume"></div>
+    <div class="trayIco" id="trayBat" title="Battery"></div>
+    <div class="trayIco" id="trayBell" title="Notifications"></div>
+  </div>
+  <div id="clock"><div class="t">--:--</div><div class="d">---</div></div>
+</div>
+
+<div id="start">
+  <div class="search">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8ea0bd" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="startSearch" placeholder="Search apps, files, commands…" autocomplete="off">
+  </div>
+  <div class="pinGrid" id="pinGrid"></div>
+  <div class="lbl" style="font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:10px 6px 4px" id="appListLbl">All applications</div>
+  <div id="appList"></div>
+  <div class="foot">
+    <div class="user"><div class="av">U</div><div><b>User</b><span>Administrator</span></div></div>
+    <button id="powerBtn" title="Power">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="notifWrap"></div>
+<div id="ncPanel">
+  <div class="hd"><b>Notifications</b>
+    <button class="btn" id="ncClear">Clear all</button>
+    <button class="wbtn" id="ncClose"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+  </div>
+  <div id="ncList"></div>
+</div>
+
+<div id="modalWrap"><div class="modal" id="modal">
+  <div class="hd"><div class="ic" id="mdlIc"></div><div><b id="mdlTitle"></b><p id="mdlText"></p></div></div>
+  <div class="bd" id="mdlBody"></div>
+  <div class="ft" id="mdlFoot"></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<div id="dgFull"><div class="bar">
+  <div class="dgTop"><b>NEXUS // SYSTEM DIAGNOSTIC MODE</b><span id="dgFullHint">ESC to exit</span></div>
+  <div class="dgGrid" id="dgFullGrid"></div>
+</div><div class="hint">DIAGNOSTIC MODE — press ESC to exit</div></div>
+
+<script>
+{{JS}}
+</script>
+</body>
+</html>

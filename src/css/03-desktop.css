@@ -1,0 +1,51 @@
+/* ---------- DESKTOP ---------- */
+#desktop{position:fixed;inset:0;z-index:1}
+#icons{position:absolute;inset:0;padding:12px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:4px}
+.dicon{width:var(--icon-size);padding:10px 4px 6px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:7px;
+  cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,transform .12s}
+.dicon:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+.dicon.sel{background:rgba(55,224,255,.16);border-color:rgba(55,224,255,.45)}
+.dicon:active{transform:scale(.96)}
+.dicon .ico{width:44px;height:44px;display:grid;place-items:center;filter:drop-shadow(0 6px 12px rgba(0,0,0,.55))}
+.dicon .ico svg{width:100%;height:100%;overflow:visible}
+.dicon span{font-size:11.5px;text-align:center;line-height:1.25;text-shadow:0 1px 4px #000,0 0 10px rgba(0,0,0,.7);
+  max-width:100%;word-break:break-word;padding:1px 5px;border-radius:5px}
+.dicon.sel span{background:var(--accent);color:#001018;text-shadow:none}
+.marquee{position:absolute;border:1px solid var(--accent);background:rgba(55,224,255,.12);pointer-events:none;display:none;z-index:5}
+
+/* ---------- TASKBAR ---------- */
+#taskbar{position:fixed;left:0;right:0;bottom:0;height:52px;z-index:9000;display:flex;align-items:center;gap:6px;padding:0 8px;
+  background:rgba(8,12,22,.62);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -10px 40px rgba(0,0,0,.45);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+#taskbar.hidden{transform:translateY(110%)}
+#startBtn{display:flex;align-items:center;gap:9px;padding:7px 14px 7px 10px;border-radius:10px;transition:background .15s,box-shadow .15s}
+#startBtn:hover,#startBtn.on{background:rgba(255,255,255,.1);box-shadow:0 0 0 1px rgba(255,255,255,.12),0 0 18px rgba(55,224,255,.25)}
+#startBtn .lg{width:22px;height:22px}
+#startBtn b{font-weight:600;font-size:12.5px;letter-spacing:.22em}
+#searchBtn{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:10px;color:var(--muted);font-size:12.5px;transition:.15s}
+#searchBtn:hover{background:rgba(255,255,255,.08);color:var(--text)}
+#taskItems{flex:1;display:flex;align-items:center;gap:5px;overflow-x:auto;overflow-y:hidden;padding:0 4px;scrollbar-width:none}
+#taskItems::-webkit-scrollbar{display:none}
+.titem{height:38px;min-width:44px;max-width:170px;padding:0 12px;border-radius:9px;display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);position:relative;flex:0 0 auto;
+  transition:background .15s,transform .12s,border-color .15s}
+.titem:hover{background:rgba(255,255,255,.12)}
+.titem:active{transform:scale(.95)}
+.titem.active{background:linear-gradient(180deg,rgba(55,224,255,.28),rgba(55,224,255,.1));border-color:rgba(55,224,255,.5);
+  box-shadow:0 0 16px rgba(55,224,255,.25)}
+.titem .ic{width:20px;height:20px;flex:0 0 auto}
+.titem .ic svg{width:100%;height:100%}
+.titem .tt{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titem .und{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:5px;height:3px;border-radius:2px;background:var(--muted)}
+.titem.active .und{width:16px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+#tray{display:flex;align-items:center;gap:4px;padding:0 4px;border-radius:9px;transition:background .15s}
+#tray:hover{background:rgba(255,255,255,.08)}
+.trayIco{width:22px;height:22px;display:grid;place-items:center;opacity:.9;position:relative}
+.trayIco svg{width:100%;height:100%}
+.trayIco.badge::after{content:attr(data-n);position:absolute;top:-4px;right:-6px;min-width:15px;height:15px;padding:0 3px;
+  border-radius:8px;background:var(--accent3);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 8px var(--accent3)}
+#clock{text-align:right;line-height:1.25;padding:4px 8px;border-radius:8px;transition:background .15s}
+#clock:hover{background:rgba(255,255,255,.08)}
+#clock .t{font-size:12.5px;font-weight:600;letter-spacing:.03em}
+#clock .d{font-size:10.5px;color:var(--muted)}

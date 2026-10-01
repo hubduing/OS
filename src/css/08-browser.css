@@ -1,0 +1,51 @@
+/* ---------- BROWSER ---------- */
+.br{display:flex;flex-direction:column;flex:1;min-height:0}
+.brTabs{flex:0 0 auto;display:flex;gap:3px;padding:6px 8px 0;background:rgba(0,0,0,.3);overflow-x:auto;scrollbar-width:none}
+.brTabs::-webkit-scrollbar{display:none}
+.brTab{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px 9px 0 0;font-size:11.5px;max-width:210px;
+  background:rgba(255,255,255,.05);transition:.13s;flex:0 0 auto;cursor:default}
+.brTab:hover{background:rgba(255,255,255,.12)}
+.brTab.on{background:rgba(255,255,255,.15)}
+.brTab .fav{width:14px;height:14px;flex:0 0 auto;border-radius:3px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.brTab .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.brTab .x{opacity:.5;font-size:13px}.brTab .x:hover{opacity:1;color:var(--err)}
+.brBar{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.brBar .nav{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#c8d6ee;transition:.13s;flex:0 0 auto}
+.brBar .nav:hover:not(:disabled){background:rgba(255,255,255,.13)}
+.brBar .nav:disabled{opacity:.28;cursor:default}
+.brBar .nav svg{width:14px;height:14px}
+.brUrl{flex:1;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;padding:6px 11px;transition:.15s}
+.brUrl:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(55,224,255,.14)}
+.brUrl svg{width:12px;height:12px;color:var(--muted);flex:0 0 auto}
+.brUrl input{flex:1;background:none;border:none;font-size:12.5px;min-width:0;user-select:text}
+.brView{flex:1;overflow:auto;background:#f7f9fc;color:#141b2b;user-select:text}
+.page{min-height:100%;padding:0;font-family:var(--font)}
+.hero{padding:70px 40px;text-align:center;background:linear-gradient(140deg,#0a1024,#1b1040 60%,#3a1040);color:#fff;position:relative;overflow:hidden}
+.hero h1{font-size:44px;font-weight:200;letter-spacing:.16em;margin-bottom:12px;
+  background:linear-gradient(90deg,#37e0ff,#b06bff,#ff4d9d);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:14px;color:#9fb3d0;max-width:520px;margin:0 auto;line-height:1.7}
+.hero .btnG{display:inline-flex;margin-top:26px;padding:11px 26px;border-radius:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#00121a;font-weight:700;font-size:13px;text-decoration:none;box-shadow:0 8px 30px rgba(55,224,255,.35)}
+.wrap{max-width:1000px;margin:0 auto;padding:34px 30px}
+.wrap h2{font-size:22px;font-weight:600;margin-bottom:14px;color:#0f1729}
+.wrap h3{font-size:15px;font-weight:600;margin:22px 0 9px;color:#1e293b}
+.wrap p{font-size:14px;line-height:1.75;color:#46536b;margin-bottom:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px;margin:20px 0}
+.card{background:#fff;border:1px solid #e3e9f2;border-radius:14px;padding:18px;transition:.2s;cursor:pointer;text-align:left;width:100%}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(20,30,60,.12);border-color:var(--accent)}
+.card .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:5px}
+.card .ic svg{width:100%;height:100%}
+.card b{font-size:14px;display:block;margin-bottom:5px;color:#0f1729}
+.card span{font-size:12.5px;color:#5b6880;line-height:1.55}
+table.tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+table.tbl th{background:#eef2f8;text-align:left;padding:9px 11px;font-size:11.5px;text-transform:uppercase;letter-spacing:.09em;color:#5b6880}
+table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
+.bar2{height:8px;background:#e6ebf3;border-radius:5px;overflow:hidden;margin:5px 0 12px}
+.bar2 i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s}
+.kbd{display:inline-block;padding:2px 7px;border-radius:5px;background:#eef2f8;border:1px solid #d3dbe8;
+  border-bottom-width:2px;font-family:var(--mono);font-size:11.5px;color:#33405a}
+.brFind{position:absolute;top:0;right:0;padding:7px 10px;background:#fff;border-left:1px solid #e3e9f2;border-bottom:1px solid #e3e9f2;
+  display:none;gap:6px;align-items:center;z-index:5}
+.brFind.on{display:flex}
+.brFind input{width:170px;padding:5px 9px;border:1px solid #d3dbe8;border-radius:6px;font-size:12.5px}

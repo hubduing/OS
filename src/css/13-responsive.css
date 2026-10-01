@@ -1,0 +1,27 @@
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:900px){
+  .fmSide,.stSide{width:132px}
+  .nxCore{flex-basis:130px}
+  #nxOrb{width:92px;height:92px}
+  .mdList{width:150px}
+  .ptSide{width:120px}
+  #start{width:340px}
+}
+@media (max-width:640px){
+  :root{--icon-size:66px;--taskbar-h:48px}
+  #taskbar{height:48px;padding:0 5px;gap:3px}
+  #searchBtn span,#startBtn b{display:none}
+  #startBtn{padding:7px 9px}
+  .titem .tt{display:none}
+  .titem{min-width:38px;padding:0 8px}
+  .fmSide,.stSide,.mdList,.ptSide{display:none}
+  .nxCore{display:none}
+  .dicon .ico{width:34px;height:34px}
+  .msg{max-width:92%}
+  #notifWrap{width:calc(100vw - 24px)}
+  .calcVal{font-size:27px}
+}
+@media (max-height:560px){
+  #icons{gap:2px}
+  .dicon{padding:6px 3px 4px}
+}

@@ -1,0 +1,49 @@
+/* ---------- EDITOR ---------- */
+.ed{display:flex;flex:1;min-height:0;position:relative}
+.edGutter{flex:0 0 auto;padding:9px 8px 9px 12px;text-align:right;font-family:var(--mono);font-size:12.5px;line-height:1.55;
+  color:#3d4f6b;background:rgba(0,0,0,.24);border-right:1px solid rgba(255,255,255,.06);overflow:hidden;user-select:none}
+.edGutter div.cur{color:var(--accent);text-shadow:0 0 8px var(--accent)}
+.edArea{flex:1;position:relative;overflow:hidden}
+.edPre,.edTa{position:absolute;inset:0;padding:9px 13px;font-family:var(--mono);font-size:12.5px;line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;border:none;user-select:text;overflow-y:auto}
+.edPre{pointer-events:none;color:#c9dcf5;z-index:1}
+.edTa{background:transparent;color:transparent;caret-color:var(--accent);z-index:2;resize:none}
+.tk-key{color:#b06bff;font-weight:600}
+.tk-str{color:#3ddc84}
+.tk-num{color:#ffc857}
+.tk-com{color:#4a5f7d;font-style:italic}
+.tk-fn{color:#37e0ff}
+.tk-tag{color:#ff4d9d}
+.tk-attr{color:#ffc857}
+.edTabs{flex:0 0 auto;display:flex;gap:2px;padding:5px 6px 0;background:rgba(0,0,0,.26);overflow-x:auto;scrollbar-width:none}
+.edTabs::-webkit-scrollbar{display:none}
+.edTab{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:8px 8px 0 0;font-size:11.5px;color:var(--muted);
+  background:rgba(255,255,255,.05);white-space:nowrap;transition:.13s;flex:0 0 auto}
+.edTab:hover{background:rgba(255,255,255,.11)}
+.edTab.on{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 -2px 0 var(--accent)}
+.edTab .dot{width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.edTab .x{opacity:.5;font-size:13px;line-height:1}
+.edTab .x:hover{opacity:1;color:var(--err)}
+.edStatus{flex:0 0 auto;display:flex;gap:16px;align-items:center;padding:5px 12px;font-size:10.5px;color:var(--muted);
+  border-top:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.22);font-family:var(--mono)}
+.edStatus .ok{color:var(--ok)}
+.edStatus .wr{color:var(--warn)}
+
+/* ---------- CALCULATOR ---------- */
+.calc{flex:1;display:flex;flex-direction:column;min-height:0;padding:12px;gap:11px;background:rgba(0,0,0,.2)}
+.calcDisp{flex:0 0 auto;text-align:right;padding:14px 16px;border-radius:13px;background:rgba(0,0,0,.34);
+  border:1px solid rgba(255,255,255,.09)}
+.calcExpr{font-size:12.5px;color:var(--muted);min-height:18px;font-family:var(--mono);word-break:break-all}
+.calcVal{font-size:34px;font-weight:200;letter-spacing:-.02em;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calcPad{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;min-height:0}
+.ckey{border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);font-size:16px;font-weight:400;
+  transition:.12s;display:grid;place-items:center;color:#e8f1ff}
+.ckey:hover{background:rgba(255,255,255,.15);transform:translateY(-1px)}
+.ckey:active{transform:scale(.94)}
+.ckey.op{background:linear-gradient(135deg,rgba(55,224,255,.28),rgba(176,107,255,.2));border-color:rgba(55,224,255,.35);font-weight:600}
+.ckey.fn{background:rgba(255,255,255,.13);font-size:14px;color:#c8d6ee}
+.ckey.eq{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#00121a;font-weight:700;box-shadow:0 4px 18px rgba(55,224,255,.35)}
+.calcHist{flex:0 0 92px;overflow-y:auto;border-radius:11px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.07);padding:6px}
+.calcHist div{padding:5px 8px;font-size:11.5px;font-family:var(--mono);color:var(--muted);border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.calcHist div:hover{background:rgba(255,255,255,.09);color:#fff}
+.calcHist b{color:var(--accent);font-weight:600}

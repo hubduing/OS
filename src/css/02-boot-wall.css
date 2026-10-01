@@ -1,0 +1,35 @@
+/* ---------- BOOT ---------- */
+#boot{position:fixed;inset:0;background:#04060b;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-family:var(--mono);color:#9fe8ff;overflow:hidden}
+#boot.off{opacity:0;pointer-events:none;transition:opacity .8s ease, filter .8s}
+#boot.gone{display:none}
+#bootGlow{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(90px);opacity:.30;
+  background:radial-gradient(circle,var(--accent) 0%,transparent 65%);animation:pulseGlow 3.4s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{transform:scale(.85);opacity:.22}50%{transform:scale(1.12);opacity:.4}}
+#bootLogo{position:relative;font-size:clamp(30px,7vw,62px);font-weight:200;letter-spacing:.36em;
+  text-indent:.36em;margin-bottom:6px;
+  background:linear-gradient(90deg,#37e0ff,#b06bff,#ff4d9d,#37e0ff);background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 4s linear infinite;
+  filter:drop-shadow(0 0 22px rgba(55,224,255,.5))}
+@keyframes shine{to{background-position:300% 0}}
+#bootSub{position:relative;font-size:11px;letter-spacing:.42em;color:#4a7f9e;margin-bottom:34px;text-transform:uppercase}
+#bootLog{position:relative;width:min(640px,88vw);height:200px;overflow:hidden;font-size:13px;line-height:1.75}
+#bootLog div{opacity:0;animation:fadeIn .3s forwards;white-space:pre-wrap}
+#bootLog .ok{color:#3ddc84}
+#bootLog .warn{color:#ffc857}
+#bootLog .hi{color:#fff;text-shadow:0 0 10px var(--accent)}
+@keyframes fadeIn{to{opacity:1}}
+#bootCur{display:inline-block;width:9px;height:16px;background:var(--accent);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#bootBarWrap{position:relative;width:min(640px,88vw);height:3px;background:rgba(255,255,255,.08);border-radius:4px;margin-top:18px;overflow:hidden}
+#bootBar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 14px var(--accent);transition:width .25s}
+#bootPct{position:relative;margin-top:10px;font-size:11px;color:#4a7f9e;letter-spacing:.2em}
+#shutdownScreen{position:fixed;inset:0;background:#04060b;z-index:100000;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:18px;font-family:var(--mono);color:var(--accent);letter-spacing:.3em;font-size:13px}
+#shutdownScreen.on{display:flex}
+
+/* ---------- WALLPAPER ---------- */
+#wall{position:fixed;inset:0;z-index:0;background:#05070d;overflow:hidden}
+#wall canvas{position:absolute;inset:0;width:100%;height:100%}
+#wall .wp{position:absolute;inset:0;opacity:0;transition:opacity 1.1s ease;background-size:cover;background-position:center}
+#wall .wp.on{opacity:1}

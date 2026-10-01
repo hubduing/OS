@@ -1,0 +1,105 @@
+/* ============================================================
+   MUSIC AND VIDEO
+   ============================================================
+   The player chrome (mbtn / mdSeek / mdItem) is shared with the original media
+   layout and lives in 09-paint-media.css. This file adds only what the two
+   new apps introduce.
+
+   Both stages are the same shape on purpose: a black box that fills the window
+   and letterboxes its content. The video stage is the one that goes full
+   screen, so it has to fill its container exactly, not inherit the smaller
+   fixed height the music visualiser uses. */
+
+/* ---------- music: now-playing panel over the visualiser ---------- */
+/* The inherited .mdStage is a fixed 34% slice, sized for the old video-in-a-
+   box media player. The visualiser is the point of this app, so the stage
+   takes the leftover height instead and the transport keeps its intrinsic
+   size. Overridden here rather than in 09 because .md is now Music's only
+   consumer, and the rule still reads as a deliberate choice next to it. */
+.mdStage{flex:1 1 auto;height:auto;min-height:180px}
+.muNow{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;text-align:center;padding:18px;
+  background:rgba(4,7,16,.55);backdrop-filter:blur(3px);pointer-events:none;
+  transition:opacity .3s;
+}
+.muNow.live{opacity:0}
+.muNow.live:hover{opacity:1}
+.muNow b{font-size:15px;letter-spacing:.01em}
+.muNow span{font-size:11px;color:var(--muted);max-width:340px;line-height:1.5}
+.muArt{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;
+  filter:blur(26px) saturate(1.5);opacity:.5;
+}
+.muNow.live .muArt{opacity:.28}
+#muViz{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* ---------- video ---------- */
+.vd{display:flex;flex-direction:column;flex:1;min-height:0;gap:10px;padding:12px;background:rgba(0,0,0,.24)}
+.vdStage{
+  flex:1;min-height:0;border-radius:13px;background:#000;overflow:hidden;
+  position:relative;display:grid;place-items:center;cursor:pointer;
+}
+.vdStage video,.vdStage canvas{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.vdEmpty{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;text-align:center;color:var(--muted);padding:20px;
+}
+.vdEmpty b{font-size:15px;color:#c8d6ee}
+.vdEmpty span{font-size:11.5px;max-width:320px;line-height:1.5}
+.vdBig{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:66px;height:66px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(6,12,24,.62);border:1px solid rgba(255,255,255,.18);
+  color:#fff;pointer-events:none;transition:.16s;backdrop-filter:blur(4px);
+}
+.vdBig svg{width:26px;height:26px;margin-left:3px}
+.vdStage:hover .vdBig{background:rgba(6,12,24,.8)}
+/* chapter / timecode burn-in from the generated reel */
+.vdBadge{
+  position:absolute;left:14px;top:12px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;color:rgba(255,255,255,.62);background:rgba(0,0,0,.42);
+  padding:4px 9px;border-radius:6px;pointer-events:none;display:none;
+}
+.vdBadge:empty{display:none}
+.vdSubs{
+  position:absolute;left:0;right:0;bottom:22px;text-align:center;
+  font-size:17px;line-height:1.45;color:#fff;font-weight:600;
+  text-shadow:0 2px 5px #000,0 0 12px rgba(0,0,0,.9);
+  padding:0 8%;pointer-events:none;white-space:pre-line;
+}
+.vdBar{flex:0 0 auto;display:flex;align-items:center;gap:9px}
+.vdTime{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:82px;text-align:center}
+.vdSeek{position:relative}
+.vdSeek u{
+  position:absolute;top:-3px;width:2px;height:12px;background:rgba(255,255,255,.5);
+  border-radius:1px;cursor:pointer;
+}
+.vdSeek u:hover{background:var(--accent2);height:16px;top:-5px}
+.vdRate{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);cursor:pointer;
+  padding:4px 7px;border-radius:6px;border:1px solid rgba(255,255,255,.13);
+  min-width:38px;text-align:center;transition:.13s;
+}
+.vdRate:hover{background:rgba(255,255,255,.1);color:#c8d6ee}
+.vdRate.on{color:var(--accent);border-color:var(--accent);background:rgba(55,224,255,.12)}
+.vdBar .mbtn{font-size:9.5px;font-weight:700;letter-spacing:.04em;width:36px;height:36px}
+.vdBar .mbtn svg{width:15px;height:15px}
+.vdBar .mbtn.on{background:rgba(55,224,255,.2);color:var(--accent)}
+.vdRecent{flex:0 0 auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:0}
+.vdChip{
+  font-size:10.5px;padding:4px 9px;border-radius:20px;color:#c8d6ee;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+  max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.13s;
+}
+.vdChip:hover{background:rgba(255,255,255,.13);color:#fff}
+
+/* toolbar buttons latch visibly when a mode is on */
+.toolbar .btn[data-on="1"]{background:rgba(55,224,255,.2);color:var(--accent);border-color:rgba(55,224,255,.5)}
+.toolbar .btn[data-on="0"]{opacity:.6}
+
+/* Fullscreen drops the window furniture entirely: the stage becomes the
+   screen, so its rounded corners and the app padding have to go. */
+.vdStage:fullscreen{border-radius:0}
+.vdStage:fullscreen .vdSubs{bottom:42px;font-size:26px}
+.vdStage:-webkit-full-screen{border-radius:0}
