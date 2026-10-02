@@ -171,15 +171,22 @@ check(6, 'collect() rejects an unclaimed file and a doubly-claimed one', () => {
 check(7, 'the real src/manifest.js loads and every listed file exists', () => {
   const m = lib.load(ROOT);
   const files = lib.collect(ROOT);
+  // Only the kernel module's files come from a directory listing. Packages and
+  // apps are named by an explicit `files` list, which collect() validates
+  // against the disk itself (existence here, strays and duplicates in load()),
+  // so comparing the whole collection against the kernel directory would fail
+  // the moment the tree has a single module outside it.
   const fsList = fs
     .readdirSync(path.join(ROOT, m.kernel.dir))
     .filter(f => f.endsWith('.js'))
     .sort();
-  assert(files.length === fsList.length,
-    'collect() returned ' + files.length + ' files, ' + m.kernel.dir + ' holds ' + fsList.length);
+  const kernelFiles = files.filter(f => f.dir === m.kernel.dir).map(f => f.file);
+  assert(kernelFiles.length === fsList.length,
+    'collect() returned ' + kernelFiles.length + ' kernel files, ' +
+      m.kernel.dir + ' holds ' + fsList.length);
   assert(
-    files.map(f => f.file).join(',') === fsList.join(','),
-    'collect() order was ' + files.map(f => f.file).join(',')
+    kernelFiles.join(',') === fsList.join(','),
+    'collect() order was ' + kernelFiles.join(',')
   );
   for (const e of files) assert(fs.existsSync(e.abs), e.abs + ' does not exist');
   assert(m.order.length === m.packages.length + m.apps.length, 'order length mismatch');
@@ -235,10 +242,22 @@ check(9, 'the kernel is src/kernel, src/js is gone, and the containers exist', (
     fs.statSync(path.join(ROOT, 'src', 'kernel')).isDirectory(),
     'src/kernel does not exist');
 
-  // Phase 0 has no modules yet, so "every apps/ and packages/ dir is listed"
-  // has nothing to check; what it CAN check is that both containers are real
-  // directories the manifest is prepared to point into. load() has already
-  // refused anything unaccounted for, so an empty container is not an orphan.
+  // Every apps/ and packages/ directory on disk is named by the manifest, in
+  // both directions: load() refuses an unlisted one, and the explicit `files`
+  // lists plus the existence check below refuse a listed one that is not there.
+  const declared = new Set([m.kernel.dir].concat(m.order.map(e => e.dir)));
+  for (const e of m.order) {
+    assert(declared.has(e.dir), e.id + ' dir ' + e.dir + ' is not declared');
+    assert(e.files.length > 0, e.id + ' lists no files');
+    for (const f of e.files) {
+      assert(fs.existsSync(path.join(ROOT, e.dir, f)),
+        e.id + ' names ' + e.dir + '/' + f + ', which does not exist');
+    }
+  }
+  // And every module the manifest declares must actually be reachable, or a
+  // module id exists that nothing loads.
+  assert(m.order.length > 0,
+    'no packages or apps are declared - the refactor has moved nothing yet');
   for (const c of ['packages', 'apps']) {
     const dir = path.join(ROOT, 'src', c);
     assert(fs.existsSync(dir) && fs.statSync(dir).isDirectory(), 'src/' + c + ' does not exist');

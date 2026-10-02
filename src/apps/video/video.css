@@ -1,40 +1,17 @@
 /* ============================================================
-   MUSIC AND VIDEO
+   VIDEO — the player chrome around the reel or a real file
    ============================================================
-   The player chrome (mbtn / mdSeek / mdItem) is shared with the original media
-   layout and lives in 09-paint-media.css. This file adds only what the two
-   new apps introduce.
+   Moved here from 14-music-video.css when the app left the kernel.
 
-   Both stages are the same shape on purpose: a black box that fills the window
-   and letterboxes its content. The video stage is the one that goes full
-   screen, so it has to fill its container exactly, not inherit the smaller
-   fixed height the music visualiser uses. */
+   The shared transport widgets (.mbtn, .mdSeek) stay in the kernel's
+   09-paint-media.css: the Music app uses them too, and a rule that belongs to
+   two apps does not belong to either of their folders. Only what is exclusive
+   to this player lives here.
 
-/* ---------- music: now-playing panel over the visualiser ---------- */
-/* The inherited .mdStage is a fixed 34% slice, sized for the old video-in-a-
-   box media player. The visualiser is the point of this app, so the stage
-   takes the leftover height instead and the transport keeps its intrinsic
-   size. Overridden here rather than in 09 because .md is now Music's only
-   consumer, and the rule still reads as a deliberate choice next to it. */
-.mdStage{flex:1 1 auto;height:auto;min-height:180px}
-.muNow{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:5px;text-align:center;padding:18px;
-  background:rgba(4,7,16,.55);backdrop-filter:blur(3px);pointer-events:none;
-  transition:opacity .3s;
-}
-.muNow.live{opacity:0}
-.muNow.live:hover{opacity:1}
-.muNow b{font-size:15px;letter-spacing:.01em}
-.muNow span{font-size:11px;color:var(--muted);max-width:340px;line-height:1.5}
-.muArt{
-  position:absolute;inset:0;overflow:hidden;pointer-events:none;
-  filter:blur(26px) saturate(1.5);opacity:.5;
-}
-.muNow.live .muArt{opacity:.28}
-#muViz{position:absolute;inset:0;width:100%;height:100%;display:block}
+   The stage fills its container exactly and is the surface that goes full
+   screen, so it does not inherit the smaller fixed height the music
+   visualiser uses. */
 
-/* ---------- video ---------- */
 .vd{display:flex;flex-direction:column;flex:1;min-height:0;gap:10px;padding:12px;background:rgba(0,0,0,.24)}
 .vdStage{
   flex:1;min-height:0;border-radius:13px;background:#000;overflow:hidden;
@@ -93,10 +70,6 @@
   max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.13s;
 }
 .vdChip:hover{background:rgba(255,255,255,.13);color:#fff}
-
-/* toolbar buttons latch visibly when a mode is on */
-.toolbar .btn[data-on="1"]{background:rgba(55,224,255,.2);color:var(--accent);border-color:rgba(55,224,255,.5)}
-.toolbar .btn[data-on="0"]{opacity:.6}
 
 /* Fullscreen drops the window furniture entirely: the stage becomes the
    screen, so its rounded corners and the app padding have to go. */

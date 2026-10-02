@@ -20,12 +20,16 @@
  * failure mode this now refuses outright (see the loud checks below).
  *
  * Subsystem classification is by manifest id. Phase 1 gives each subsystem its
- * own module; until then they are all inside the single `kernel` module, so the
- * role table below also carries a filename, resolved against the manifest's own
- * kernel.dir. Phase 1 replaces the filename column with the id column and the
- * ids become the only key. Both columns are checked against the manifest, so a
- * rename that misses this table fails here instead of silently un-checking a
- * whole subsystem.
+ * own module; until then some are still inside the single `kernel` module, so
+ * each entry below also carries the kernel filename it has today. The id is
+ * tried first and the filename is a fallback FOR THAT ONE ID, never for the
+ * role as a whole: an earlier version asked "does ANY id of this role exist?"
+ * and only then consulted the filenames, which meant that as soon as `music`
+ * and `video` became real ids the reel silently dropped out of the media checks
+ * with nothing reported. A guard that stops checking a subsystem because a
+ * DIFFERENT subsystem moved is exactly the silence it exists to prevent.
+ * Both halves are checked against the manifest, so a rename that misses this
+ * table fails here instead of silently un-checking a whole subsystem.
  *
  * Usage: node tools/test-audio-mute.js
  */
@@ -43,14 +47,20 @@ const ROOT = path.resolve(__dirname, '..');
 const AUDIO_ID = 'kernel-audio';
 const AUDIO_FILE = '03-audio.js';
 
-/* role -> manifest ids that carry it (Phase 1) OR the kernel filename that
-   does today. The id list wins when such a module exists; the file name is
-   only consulted inside the kernel module. */
-const ROLES = {
-  game:  { ids: ['game-snake', 'game-racer', 'arcade'], files: ['22-arcade.js', '23-game-snake.js', '24-game-racer.js'] },
-  media: { ids: ['music', 'video'], files: ['17-music.js', '30-video.js', '31-reel.js'] },
-  synth: { ids: ['synth'], files: ['28-synth.js'] },
-};
+/* One entry per SUBSYSTEM, not per role: `id` is the manifest id the subsystem
+   gets in Phase 1, and `file` is the kernel filename it carries today, used only
+   when that exact id does not exist yet. Resolving them together is what makes
+   the fallback per-id; a fallback chosen for the role as a whole goes quiet on
+   every id that happens to have arrived. */
+const ROLES = [
+  { role: 'game',  id: 'game-snake', file: '23-game-snake.js' },
+  { role: 'game',  id: 'game-racer', file: '24-game-racer.js' },
+  { role: 'game',  id: 'arcade',     file: '22-arcade.js' },
+  { role: 'media', id: 'music',      file: '17-music.js' },
+  { role: 'media', id: 'video',      file: '30-video.js' },
+  { role: 'media', id: 'reel',       file: '31-reel.js' },
+  { role: 'synth', id: 'synth',      file: '28-synth.js' },
+];
 
 /* ---- the file list, from the manifest ------------------------------------ */
 
@@ -113,29 +123,27 @@ if (!audioFile) {
 
 const files = collected.map(f => ({ file: f.file, id: f.id, abs: f.abs }));
 
-/* Is this file in `role`? By id when the manifest has such a module, else by
-   filename inside the kernel module. A name in the table that matches nothing
-   on disk is reported rather than ignored — that is how a rename would
-   otherwise un-check a subsystem silently. */
+/* Is this file in `role`? Resolved per id: a module with that id wins, else the
+   kernel file the id stands for today. An entry that matches neither on disk is
+   reported by name - that is how a rename would otherwise un-check a subsystem
+   silently - and the check for THAT id stays empty rather than the whole role
+   being dropped. */
 const roleNames = new Map();
-for (const [role, spec] of Object.entries(ROLES)) {
-  const hits = new Set();
-  for (const id of spec.ids) {
-    if (byId.has(id)) for (const f of byId.get(id)) hits.add(f.abs);
+for (const { role, id, file } of ROLES) {
+  if (!roleNames.has(role)) roleNames.set(role, new Set());
+  const hits = roleNames.get(role);
+  const mod = byId.get(id);
+  if (mod) {
+    for (const f of mod) hits.add(f.abs);
+    continue;
   }
-  if (hits.size === 0) {
-    const kernel = byId.get('kernel') || [];
-    for (const name of spec.files) {
-      const f = kernel.find(k => k.file === name);
-      if (f) hits.add(f.abs);
-      else {
-        failures.push(`${loaded.kernel.dir}/${name}: the ${role} role names it but ` +
-          `no such file is in the manifest (ids ${spec.ids.join(', ')} do not ` +
-          `exist yet either)`);
-      }
-    }
+  const kernel = (byId.get('kernel') || []).find(k => k.file === file);
+  if (kernel) hits.add(kernel.abs);
+  else {
+    failures.push(`${loaded.kernel.dir}/${file}: the ${role} role maps id "${id}" to ` +
+      `it, but there is no module with that id and no such file in the kernel - ` +
+      `that subsystem is now unchecked`);
   }
-  roleNames.set(role, hits);
 }
 const isGame  = (f) => roleNames.get('game').has(f.abs);
 const isMedia = (f) => roleNames.get('media').has(f.abs);

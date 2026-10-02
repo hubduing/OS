@@ -190,6 +190,77 @@ function stripInlineComments(line) {
   return line.replace(/\/\*[\s\S]*?\*\//g, m => ' '.repeat(m.length));
 }
 
+/* `${` blanked in place, for the same reason: it is a template interpolation
+   opener, not the `$` query helper.
+   Only reachable from a template literal that SPANS LINES. On the opening line
+   stripStrings blanks the whole literal, but on a continuation line the backtick
+   is not on that line, so the scanner has no idea it is still inside a string
+   and reads `${` as a reference to `$`. That is why nothing caught it until the
+   first converted module with a multi-line innerHTML template: the kernel is
+   exempt from this contract, so no kernel file was ever scanned for it.
+
+   The blanking is two characters wide on purpose. Everything else inside the
+   interpolation stays visible, because that IS real code and this guard exists
+   to check it — `ICONS.prev` on a continuation line must still be reported when
+   the module did not destructure ICONS. */
+function stripInterpolation(line) {
+  return line.replace(/\$\{/g, '  ');
+}
+
+/* Regex literals blanked in place, same reason: `/[^./]+$/` ends in an anchor
+   that is not the `$` query helper, and `.replace(/\.[^./]+$/,'')` is how the
+   Video app strips a file extension.
+
+   Only the CLOSING `/` is recognised, and only where a `/` cannot be division:
+   the previous significant character must be one that cannot end an operand, so
+   `= /re/` is a literal while `a / b` and `)/` are not touched. When the shape
+   is ambiguous the text is left EXACTLY as it was - a false positive here is a
+   loud, fixable failure, while blanking a division would silently stop checking
+   whatever followed it, which is the failure this whole file exists to prevent.
+
+   Order matters: this runs BEFORE stripStrings, because a `/` inside a quoted
+   selector (`url("/a/b")`) must not be mistaken for the start of a literal. */
+const REGEX_OPENER = /[({[,;:=!&|?+\-*%^~<>]/;
+function stripRegex(line) {
+  let out = '';
+  let i = 0;
+  while (i < line.length) {
+    const c = line[i];
+    if (c === '"' || c === "'" || c === '`') break;   // stripStrings owns strings
+    if (c === '/' && line[i + 1] !== '/' && line[i + 1] !== '*' &&
+        (out === '' || REGEX_OPENER.test(lastSignificant(out)))) {
+      const end = regexEnd(line, i);
+      if (end !== -1) {
+        let k = end + 1;
+        while (k < line.length && /[a-z]/i.test(line[k])) k++;   // flags
+        out += ' '.repeat(k - i);
+        i = k;
+        continue;
+      }
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+function lastSignificant(s) {
+  for (let i = s.length - 1; i >= 0; i--) if (!/\s/.test(s[i])) return s[i];
+  return '';
+}
+/* Index of the `/` that closes a literal opening at `from`, honouring backslash
+   escapes and a `[...]` character class, or -1 when there is none on this line. */
+function regexEnd(line, from) {
+  let cls = false;
+  for (let i = from + 1; i < line.length; i++) {
+    const d = line[i];
+    if (d === '\\') { i++; continue; }
+    if (d === '[') cls = true;
+    else if (d === ']') cls = false;
+    else if (d === '/' && !cls) return i;
+  }
+  return -1;
+}
+
 /* The body split into {raw, code} per line, with comments blanked to '' and the
    contents of string literals and trailing // comments removed.
 
@@ -203,7 +274,7 @@ function codeLines(body) {
     raw,
     code: inComment[i]
       ? ''
-      : stripStrings(stripInlineComments(raw)).replace(/\/\/.*$/, ''),
+      : stripInterpolation(stripStrings(stripRegex(stripInlineComments(raw)))).replace(/\/\/.*$/, ''),
   }));
 }
 

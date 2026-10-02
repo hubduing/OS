@@ -17,13 +17,14 @@
   repeating-conic-gradient(rgba(255,255,255,.03) 0% 25%,transparent 0% 50%) 50%/18px 18px}
 #ptCanvas{background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5);cursor:crosshair;border-radius:4px;max-width:100%;image-rendering:pixelated}
 
-/* ---------- MEDIA ---------- */
-.md{display:flex;flex:1;min-height:0}
-.mdMain{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px;gap:12px;background:rgba(0,0,0,.24)}
-.mdStage{flex:0 0 auto;height:34%;min-height:110px;border-radius:13px;background:#000;display:grid;place-items:center;overflow:hidden;position:relative}
-.mdStage video,.mdStage audio{width:100%;height:100%;object-fit:contain;background:#000}
-#mdViz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
-.mdCtrl{flex:0 0 auto;display:flex;align-items:center;gap:11px}
+/* ---------- SHARED PLAYER CHROME ----------
+   Music and Video are apps now and each carries its own exclusive rules in its
+   own folder. What is left here is the transport they BOTH use — the round
+   buttons and the scrub bar. A rule with two owners has no single owning
+   folder, so it stays in the kernel and is named here rather than left as an
+   unexplained leftover. Everything else under MEDIA moved:
+     .md .mdMain .mdStage .mdCtrl .mdTime .mdList .mdItem -> apps/music
+     .vd* and the fullscreen rules                    -> apps/video */
 .mbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.09);
   border:1px solid rgba(255,255,255,.12);transition:.14s}
 .mbtn:hover{background:rgba(255,255,255,.18);transform:scale(1.06)}
@@ -36,11 +37,3 @@
 .mdSeek b{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#fff;
   box-shadow:0 0 10px var(--accent);opacity:0;transition:opacity .13s}
 .mdSeek:hover b{opacity:1}
-.mdTime{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:82px;text-align:right}
-.mdList{width:210px;flex:0 0 auto;border-left:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;background:rgba(0,0,0,.18)}
-.mdItem{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:11.5px;transition:.13s;cursor:default;width:100%;text-align:left}
-.mdItem:hover{background:rgba(255,255,255,.08)}
-.mdItem.on{background:linear-gradient(90deg,rgba(55,224,255,.24),transparent);box-shadow:inset 2px 0 0 var(--accent)}
-.mdItem .ic{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;color:var(--accent)}
-.mdItem .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mdItem .x{opacity:.4}.mdItem .x:hover{opacity:1;color:var(--err)}

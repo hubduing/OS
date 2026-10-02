@@ -7,11 +7,12 @@
   "scripts": {
     "build": "node build.js",
     "check": "node build.js --check",
-    "test": "node tools/test-build-guard.js && node tools/test-audio-mute.js && node tools/test-songs.js && node tools/test-manifest.js && node tools/test-kernel-ctx.js && node tools/test-isolation.js",
+    "test": "node tools/test-build-guard.js && node tools/test-audio-mute.js && node tools/test-songs.js && node tools/test-manifest.js && node tools/test-kernel-ctx.js && node tools/test-kernel-names.js && node tools/test-isolation.js",
     "test:audio": "node tools/test-audio-mute.js",
     "test:build": "node tools/test-build-guard.js",
     "test:kernel-ctx": "node tools/test-kernel-ctx.js",
     "test:isolation": "node tools/test-isolation.js",
+    "test:kernel-names": "node tools/test-kernel-names.js",
     "test:manifest": "node tools/test-manifest.js",
     "test:songs": "node tools/test-songs.js",
     "dev": "node build.js --check && node tools/serve.js",

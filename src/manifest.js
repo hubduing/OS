@@ -37,8 +37,20 @@ module.exports = {
   cssLate: ['src/kernel/13-responsive.css'],
 
   // Reusable modules, topologically sorted; what they export others consume.
-  packages: [],
+  packages: [
+    // `reel` is a package, not an app: apps/video renders it and reaches it
+    // through ctx.use('reel'), and nothing else does. Its own dependency on
+    // `Subs` is a ctx.core read, not a ctx.use, because Subtitles is still a
+    // kernel name — see the consumer-before-provider rule in the spec.
+    { id: 'reel', dir: 'src/packages/reel', deps: [], files: ['entry.js'] },
+  ],
 
   // Applications, topologically sorted; each registers into APPS.
-  apps: [],
+  apps: [
+    // Music reads Synth and TRACKS from ctx.core: both are still kernel-owned.
+    // No `deps` yet, because there is nothing to depend on until those two
+    // leave the kernel.
+    { id: 'music', dir: 'src/apps/music', deps: [], css: 'music.css', files: ['entry.js'] },
+    { id: 'video', dir: 'src/apps/video', deps: ['reel'], css: 'video.css', files: ['entry.js'] },
+  ],
 };

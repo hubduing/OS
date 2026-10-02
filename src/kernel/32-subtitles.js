@@ -107,7 +107,7 @@ const Subs={
     DEFAULT_SETTINGS, DESKTOP_APPS, Diag, EXT_ICON, Eggs, GAMES,
     HL, ICONS, IDEAS_TEXT, INSTRUMENTS, KONAMI, LS,
     MONTHS, NEXUS, NEXUS_FORTUNES, NEXUS_HELP, NEXUS_JOKES, NEXUS_PAGES,
-    Notify, Pinned, Reel, S, SECRET_TEXT, SETTING_CHOICES,
+    Notify, Pinned, S, SECRET_TEXT, SETTING_CHOICES,
     SYNTH_STEP, Subs, Synth, THEMES, TRACKS, VFS,
     WALLPAPERS, WELCOME_TEXT, WM, Wall, ago, applySettings,
     applyTheme, boot, buildRacer, buildSnake, cascade, clamp,

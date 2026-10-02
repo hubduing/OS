@@ -523,13 +523,14 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
   repeating-conic-gradient(rgba(255,255,255,.03) 0% 25%,transparent 0% 50%) 50%/18px 18px}
 #ptCanvas{background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5);cursor:crosshair;border-radius:4px;max-width:100%;image-rendering:pixelated}
 
-/* ---------- MEDIA ---------- */
-.md{display:flex;flex:1;min-height:0}
-.mdMain{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px;gap:12px;background:rgba(0,0,0,.24)}
-.mdStage{flex:0 0 auto;height:34%;min-height:110px;border-radius:13px;background:#000;display:grid;place-items:center;overflow:hidden;position:relative}
-.mdStage video,.mdStage audio{width:100%;height:100%;object-fit:contain;background:#000}
-#mdViz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
-.mdCtrl{flex:0 0 auto;display:flex;align-items:center;gap:11px}
+/* ---------- SHARED PLAYER CHROME ----------
+   Music and Video are apps now and each carries its own exclusive rules in its
+   own folder. What is left here is the transport they BOTH use — the round
+   buttons and the scrub bar. A rule with two owners has no single owning
+   folder, so it stays in the kernel and is named here rather than left as an
+   unexplained leftover. Everything else under MEDIA moved:
+     .md .mdMain .mdStage .mdCtrl .mdTime .mdList .mdItem -> apps/music
+     .vd* and the fullscreen rules                    -> apps/video */
 .mbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.09);
   border:1px solid rgba(255,255,255,.12);transition:.14s}
 .mbtn:hover{background:rgba(255,255,255,.18);transform:scale(1.06)}
@@ -542,14 +543,6 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 .mdSeek b{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#fff;
   box-shadow:0 0 10px var(--accent);opacity:0;transition:opacity .13s}
 .mdSeek:hover b{opacity:1}
-.mdTime{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:82px;text-align:right}
-.mdList{width:210px;flex:0 0 auto;border-left:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;background:rgba(0,0,0,.18)}
-.mdItem{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:11.5px;transition:.13s;cursor:default;width:100%;text-align:left}
-.mdItem:hover{background:rgba(255,255,255,.08)}
-.mdItem.on{background:linear-gradient(90deg,rgba(55,224,255,.24),transparent);box-shadow:inset 2px 0 0 var(--accent)}
-.mdItem .ic{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;color:var(--accent)}
-.mdItem .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mdItem .x{opacity:.4}.mdItem .x:hover{opacity:1;color:var(--err)}
 
 
 /* ==================================================================
@@ -697,29 +690,43 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   KERNEL/14-MUSIC-VIDEO
-   src/kernel/14-music-video.css
+   APPS/MUSIC/MUSIC
+   src/apps/music/music.css
    ================================================================== */
 
 /* ============================================================
-   MUSIC AND VIDEO
+   MUSIC — the player layout and the now-playing overlay
    ============================================================
-   The player chrome (mbtn / mdSeek / mdItem) is shared with the original media
-   layout and lives in 09-paint-media.css. This file adds only what the two
-   new apps introduce.
+   Moved here from 09-paint-media.css and 14-music-video.css when the app
+   left the kernel. The two rules that describe the same box — the inherited
+   fixed-height slice and the override that gives it the leftover height —
+   travel together on purpose: an override separated from the declaration it
+   corrects is a rule with nothing to say, and .mdStage is the one place in
+   this stylesheet where the second rule must beat the first. */
 
-   Both stages are the same shape on purpose: a black box that fills the window
-   and letterboxes its content. The video stage is the one that goes full
-   screen, so it has to fill its container exactly, not inherit the smaller
-   fixed height the music visualiser uses. */
-
-/* ---------- music: now-playing panel over the visualiser ---------- */
-/* The inherited .mdStage is a fixed 34% slice, sized for the old video-in-a-
-   box media player. The visualiser is the point of this app, so the stage
-   takes the leftover height instead and the transport keeps its intrinsic
-   size. Overridden here rather than in 09 because .md is now Music's only
-   consumer, and the rule still reads as a deliberate choice next to it. */
+.md{display:flex;flex:1;min-height:0}
+.mdMain{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px;gap:12px;background:rgba(0,0,0,.24)}
+/* The stage is a black box that fills the window and letterboxes its content.
+   This is the inherited rule: a fixed 34% slice, sized for the old
+   video-in-a-box media player. */
+.mdStage{flex:0 0 auto;height:34%;min-height:110px;border-radius:13px;background:#000;display:grid;place-items:center;overflow:hidden;position:relative}
+.mdStage video,.mdStage audio{width:100%;height:100%;object-fit:contain;background:#000}
+/* …and this is the override, immediately after it. The visualiser is the
+   point of this app, so the stage takes the leftover height instead and the
+   transport keeps its intrinsic size. It must load after the rule above. */
 .mdStage{flex:1 1 auto;height:auto;min-height:180px}
+#mdViz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
+.mdCtrl{flex:0 0 auto;display:flex;align-items:center;gap:11px}
+.mdTime{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:82px;text-align:right}
+.mdList{width:210px;flex:0 0 auto;border-left:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;background:rgba(0,0,0,.18)}
+.mdItem{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:11.5px;transition:.13s;cursor:default;width:100%;text-align:left}
+.mdItem:hover{background:rgba(255,255,255,.08)}
+.mdItem.on{background:linear-gradient(90deg,rgba(55,224,255,.24),transparent);box-shadow:inset 2px 0 0 var(--accent)}
+.mdItem .ic{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;color:var(--accent)}
+.mdItem .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mdItem .x{opacity:.4}.mdItem .x:hover{opacity:1;color:var(--err)}
+
+/* ---------- now-playing panel over the visualiser ---------- */
 .muNow{
   position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:5px;text-align:center;padding:18px;
@@ -737,7 +744,30 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 .muNow.live .muArt{opacity:.28}
 #muViz{position:absolute;inset:0;width:100%;height:100%;display:block}
 
-/* ---------- video ---------- */
+/* toolbar buttons latch visibly when a mode is on */
+.toolbar .btn[data-on="1"]{background:rgba(55,224,255,.2);color:var(--accent);border-color:rgba(55,224,255,.5)}
+.toolbar .btn[data-on="0"]{opacity:.6}
+
+
+/* ==================================================================
+   APPS/VIDEO/VIDEO
+   src/apps/video/video.css
+   ================================================================== */
+
+/* ============================================================
+   VIDEO — the player chrome around the reel or a real file
+   ============================================================
+   Moved here from 14-music-video.css when the app left the kernel.
+
+   The shared transport widgets (.mbtn, .mdSeek) stay in the kernel's
+   09-paint-media.css: the Music app uses them too, and a rule that belongs to
+   two apps does not belong to either of their folders. Only what is exclusive
+   to this player lives here.
+
+   The stage fills its container exactly and is the surface that goes full
+   screen, so it does not inherit the smaller fixed height the music
+   visualiser uses. */
+
 .vd{display:flex;flex-direction:column;flex:1;min-height:0;gap:10px;padding:12px;background:rgba(0,0,0,.24)}
 .vdStage{
   flex:1;min-height:0;border-radius:13px;background:#000;overflow:hidden;
@@ -796,10 +826,6 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
   max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.13s;
 }
 .vdChip:hover{background:rgba(255,255,255,.13);color:#fff}
-
-/* toolbar buttons latch visibly when a mode is on */
-.toolbar .btn[data-on="1"]{background:rgba(55,224,255,.2);color:var(--accent);border-color:rgba(55,224,255,.5)}
-.toolbar .btn[data-on="0"]{opacity:.6}
 
 /* Fullscreen drops the window furniture entirely: the stage becomes the
    screen, so its rounded corners and the app padding have to go. */
@@ -938,7 +964,7 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
    every module against exactly this list, and __kernelDone() below
    enforces it at boot.
    ------------------------------------------------------------ */
-const KERNEL_NAMES = ["$","$$","ACCENTS","ACH_LIST","API","APPS","Achievements","Audio2","BOOT_LINES","Bus","Clipboard","DAYS","DEFAULT_SETTINGS","DESKTOP_APPS","Diag","EXT_ICON","Eggs","GAMES","HL","ICONS","IDEAS_TEXT","INSTRUMENTS","KONAMI","LS","MONTHS","NEXUS","NEXUS_FORTUNES","NEXUS_HELP","NEXUS_JOKES","NEXUS_PAGES","Notify","Pinned","Reel","S","SECRET_TEXT","SETTING_CHOICES","SYNTH_STEP","Subs","Synth","THEMES","TRACKS","VFS","WALLPAPERS","WELCOME_TEXT","WM","Wall","ago","applySettings","applyTheme","boot","buildRacer","buildSnake","cascade","clamp","clockTimer","closeCtx","closeDialog","confirmBox","ctxMenu","ctxOutside","dialog","dismiss","el","esc","extOf","filePicker","finishBoot","firstRunIntro","fmtBytes","fmtDateShort","fmtDay","fmtDayLong","fmtDur","fmtHM","fmtHMS","fmtStamp","formatLap","glitch","hexA","iconForNode","init","isImageNode","kIdx","konami","launchLine","lockScreen","modalResolve","openCtx","pad","prompt2","random","renderDesktop","renderDesktopFiles","renderStart","renderTray","resolveApp","screenshot","setSetting","showProps","shutdown","startClock","startOpen","storageBytes","tile","toast","toggleStart","trackStorage","typeName"];
+const KERNEL_NAMES = ["$","$$","ACCENTS","ACH_LIST","API","APPS","Achievements","Audio2","BOOT_LINES","Bus","Clipboard","DAYS","DEFAULT_SETTINGS","DESKTOP_APPS","Diag","EXT_ICON","Eggs","GAMES","HL","ICONS","IDEAS_TEXT","INSTRUMENTS","KONAMI","LS","MONTHS","NEXUS","NEXUS_FORTUNES","NEXUS_HELP","NEXUS_JOKES","NEXUS_PAGES","Notify","Pinned","S","SECRET_TEXT","SETTING_CHOICES","SYNTH_STEP","Subs","Synth","THEMES","TRACKS","VFS","WALLPAPERS","WELCOME_TEXT","WM","Wall","ago","applySettings","applyTheme","boot","buildRacer","buildSnake","cascade","clamp","clockTimer","closeCtx","closeDialog","confirmBox","ctxMenu","ctxOutside","dialog","dismiss","el","esc","extOf","filePicker","finishBoot","firstRunIntro","fmtBytes","fmtDateShort","fmtDay","fmtDayLong","fmtDur","fmtHM","fmtHMS","fmtStamp","formatLap","glitch","hexA","iconForNode","init","isImageNode","kIdx","konami","launchLine","lockScreen","modalResolve","openCtx","pad","prompt2","random","renderDesktop","renderDesktopFiles","renderStart","renderTray","resolveApp","screenshot","setSetting","showProps","shutdown","startClock","startOpen","storageBytes","tile","toast","toggleStart","trackStorage","typeName"];
 
 /* KERNEL_IDS is the ids of the modules the builder treats as kernel, injected
    the same way. Their exports are what ctx.core is assembled from. */
@@ -4471,331 +4497,6 @@ function isImageNode(n){return n&&n.type==='file'&&(n.dataUrl||n.mime&&n.mime.st
 
 
 /* ==================================================================
-   MUSIC
-   src/kernel/17-music.js
-   ================================================================== */
-
-/* ============================================================
-   MUSIC — synthesiser library + local audio playback
-   ============================================================
-   Two sources share one transport: the built-in synthesised library and files
-   the user opens. Both land in the same playlist, because switching between
-   them mid-session is the whole point of a player rather than a demo.
-
-   The visualiser taps Audio2's shared analyser, so it shows the actual mix
-   instead of a private copy of one source. */
-APPS.music={
-  title:'Music',icon:ICONS.aud,desc:'NexusPlayer',w:900,h:600,
-  build(w,opts){
-    w.body.innerHTML=`<div class="md">
-      <div class="mdMain">
-        <div class="mdStage" data-stage>
-          <canvas id="muViz"></canvas>
-          <div class="muNow" data-now>
-            <div class="muArt" data-art></div>
-            <b data-title>No track selected</b>
-            <span data-sub>Pick something from the library, or open a local audio file.</span>
-          </div>
-        </div>
-        <div class="mdCtrl">
-          <button class="mbtn" data-a="prev" title="Previous">${ICONS.prev}</button>
-          <button class="mbtn play" data-a="play" title="Play / pause">${ICONS.play}</button>
-          <button class="mbtn" data-a="next" title="Next">${ICONS.next}</button>
-          <div class="mdSeek" data-seek><i style="width:0"></i><b style="left:0"></b></div>
-          <span class="mdTime" data-time>0:00 / 0:00</span>
-          <button class="mbtn" data-a="mute" title="Mute" style="width:34px;height:34px">${ICONS.vol}</button>
-          <input type="range" min="0" max="100" value="80" data-vol style="width:80px;accent-color:var(--accent)" title="Player volume">
-        </div>
-        <div class="toolbar" style="border-radius:11px">
-          <button class="btn" data-a="openfile">${ICONS.open} Open audio file…</button>
-          <button class="btn" data-a="shuffle" data-on="0">Shuffle</button>
-          <button class="btn" data-a="repeat" data-on="1">Repeat</button>
-          <span class="sp"></span>
-          <span data-meta style="font-size:11px;color:#8ea0bd;font-family:var(--mono)"></span>
-        </div>
-      </div>
-      <div class="mdList">
-        <div style="padding:10px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8ea0bd">Library</div>
-        <div data-items style="flex:1;overflow-y:auto"></div>
-      </div>
-    </div>`;
-    const stage=w.body.querySelector('[data-stage]'),
-      viz=w.body.querySelector('#muViz'),
-      itemsEl=w.body.querySelector('[data-items]'),
-      seek=w.body.querySelector('[data-seek]'),
-      timeEl=w.body.querySelector('[data-time]'),
-      metaEl=w.body.querySelector('[data-meta]'),
-      nowEl=w.body.querySelector('[data-now]'),
-      titleEl=w.body.querySelector('[data-title]'),
-      subEl=w.body.querySelector('[data-sub]'),
-      artEl=w.body.querySelector('[data-art]'),
-      volInp=w.body.querySelector('[data-vol]'),
-      playBtn=w.body.querySelector('[data-a="play"]');
-
-    /* A detached <audio> for user files. The synthesiser needs no element at
-       all — it writes straight onto the bus. */
-    const audio=el('audio');audio.preload='metadata';
-    const st={list:[],idx:-1,el:null,raf:0,shuffle:false,repeat:true,elUrl:null};
-
-    const isSynth=it=>it&&it.kind==='synth';
-    /* Position and length come from the synthesiser or the element, so the
-       rest of the app never has to care which one is loaded. */
-    const curTime=()=>isSynth(st.el)?Synth.time():(st.el?st.el.currentTime:0);
-    const curDur=()=>isSynth(st.el)?Synth.duration():(st.el&&isFinite(st.el.duration)?st.el.duration:0);
-
-    function addItem(item){st.list.push(item);renderList()}
-
-    function artFor(it){
-      if(!it)return '';
-      const hue=isSynth(it)?it.song.hue:200;
-      return `<div style="position:absolute;inset:0;background:
-        radial-gradient(120% 120% at 30% 20%,hsl(${hue} 90% 55% / .55),transparent 62%),
-        radial-gradient(90% 90% at 78% 82%,hsl(${(hue+58)%360} 90% 55% / .42),transparent 60%)"></div>`;
-    }
-    function renderList(){
-      itemsEl.innerHTML='';
-      if(!st.list.length){
-        itemsEl.innerHTML='<div style="padding:14px;font-size:11.5px;color:#8ea0bd;line-height:1.6">Playlist is empty.</div>';
-        return;
-      }
-      st.list.forEach((it,i)=>{
-        const b=el('button','mdItem'+(i===st.idx?' on':''),itemsEl);
-        const sub=isSynth(it)
-          ? `${it.song.artist} · ${it.song.bpm} BPM`
-          : `${fmtBytes(it.size||0)}`;
-        const dur=isSynth(it)?fmtDur(Synth.durationOf(it.song)):fmtDur(it.el?it.el.duration:0);
-        b.innerHTML=`<span class="ic">${isSynth(it)?ICONS.aud:ICONS.file}</span>
-          <span class="nm"><b style="display:block;font-weight:600">${esc(it.name)}</b>
-            <span style="font-size:9.5px;color:#8ea0bd">${esc(sub)}</span></span>
-          <span style="font-size:9.5px;color:#8ea0bd;font-family:var(--mono)">${dur}</span>
-          <span class="x" data-x>×</span>`;
-        b.onclick=e=>{if(e.target.dataset.x)return;load(i)};
-        b.querySelector('[data-x]').onclick=e=>{
-          e.stopPropagation();
-          if(st.idx===i)stopAll();
-          if(it.objUrl)URL.revokeObjectURL(it.objUrl);
-          if(isSynth(it)&&st.idx===i)Synth.stop();
-          st.list.splice(i,1);
-          if(st.idx>i)st.idx--;
-          renderList();
-        };
-      });
-    }
-
-    function stopAll(){
-      if(isSynth(st.el))Synth.pause();
-      else if(st.el)st.el.pause();
-      stopViz();
-    }
-    function load(i){
-      if(i<0||i>=st.list.length)return;
-      stopAll();
-      st.idx=i;
-      const it=st.list[i];
-      st.el=it;
-      if(isSynth(it)){
-        Synth.load(it.song);
-        listenDone=false;
-        play();
-      }else{
-        audio.src=it.url;
-        audio.volume=+volInp.value/100;
-        audio.play().then(()=>{syncPlay();drawViz()})
-          .catch(()=>{syncPlay();toast('Press play to start')});
-      }
-      titleEl.textContent=it.name;
-      subEl.textContent=isSynth(it)
-        ? `${it.song.artist} · ${it.song.bpm} BPM · ${it.song.key} · synthesised live`
-        : 'local file';
-      artEl.innerHTML=artFor(it);
-      nowEl.classList.add('live');
-      w.el.querySelector('.ttl').textContent=it.name+' — Music';
-      renderList();
-    }
-    function play(){
-      Audio2.init();Audio2.resume();
-      if(isSynth(st.el))Synth.play();
-      else if(st.el)st.el.play().catch(()=>{});
-      syncPlay();
-      drawViz();
-    }
-    function syncPlay(){
-      const on=isSynth(st.el)?Synth.playing:!!(st.el&&!st.el.paused);
-      playBtn.innerHTML=on?ICONS.pause:ICONS.play;
-    }
-    function advance(){
-      if(!st.list.length)return;
-      let n;
-      if(st.shuffle&&st.list.length>1){
-        do{n=0|Math.random()*st.list.length}while(n===st.idx);
-      }else n=st.idx+1;
-      if(n>=st.list.length){
-        if(!st.repeat){syncPlay();return}
-        n=0;
-      }
-      load(n);
-    }
-    /* A track only counts once it has actually run to the end. Without this
-       guard, skipping to the end of a track grants the achievement and it
-       stops meaning anything. */
-    let listenDone=false;
-    Synth.onend=()=>{
-      if(!listenDone){
-        listenDone=true;
-        Achievements.grant('DJ');
-      }
-      advance();
-    };
-    const step=()=>{
-      const d=curDur(),t=curTime();
-      seek.querySelector('i').style.width=(d?t/d*100:0)+'%';
-      seek.querySelector('b').style.left=(d?t/d*100:0)+'%';
-      timeEl.textContent=fmtDur(t)+' / '+fmtDur(d);
-    };
-
-    /* ---------- visualiser ---------- */
-    const vc=viz.getContext('2d');
-    const bins=new Uint8Array(128);
-    let idleT=0;
-    function sizeCanvas(){
-      const r=viz.getBoundingClientRect();
-      const d=Math.min(devicePixelRatio||1,2);
-      if(viz.width!==Math.round(r.width*d)){
-        viz.width=Math.round(r.width*d);viz.height=Math.round(r.height*d);
-        vc.setTransform(d,0,0,d,0,0);
-      }
-      return r;
-    }
-    function drawViz(){
-      stopViz();
-      const frame=()=>{
-        st.raf=requestAnimationFrame(frame);
-        const r=sizeCanvas(),W=r.width,H=r.height;
-        const t=curTime(),d=curDur();
-        /* Mirrors the transport so the bars sweep instead of jumping. */
-        const p=d?t/d:0;
-        vc.clearRect(0,0,W,H);
-        const ana=Audio2.spectrum(bins);
-        const n=48,gap=2,bw=(W-gap*(n-1))/n;
-        const hue=isSynth(st.el)?st.el.song.hue:200;
-        for(let i=0;i<n;i++){
-          let v;
-          if(ana){
-            /* Fold 128 bins down to 48 bars logarithmically, so bass does not
-               own the left third and the treble is not a flat line. */
-            const lo=Math.floor(Math.pow(i/n,1.9)*120)+1;
-            const hi=Math.max(lo+1,Math.floor(Math.pow((i+1)/n,1.9)*120)+1);
-            let m=0;
-            for(let k=lo;k<hi&&k<bins.length;k++)if(bins[k]>m)m=bins[k];
-            v=m/255;
-          }else v=.12+Math.abs(Math.sin(performance.now()/260+i*.5))*.12;
-          const h=Math.max(2,v*H*.82);
-          const g=vc.createLinearGradient(0,H,0,H-h);
-          g.addColorStop(0,`hsl(${hue} 90% 60% / .28)`);
-          g.addColorStop(1,`hsl(${(hue+40)%360} 95% 66% / .95)`);
-          vc.fillStyle=g;
-          vc.fillRect(i*(bw+gap),H-h,bw,h);
-        }
-        /* progress hairline */
-        if(d>0){
-          vc.fillStyle=`hsl(${hue} 95% 70% / .85)`;
-          vc.fillRect(0,H-2,W*p,2);
-        }
-        step();
-      };
-      st.raf=requestAnimationFrame(frame);
-    }
-    function stopViz(){
-      if(st.raf)cancelAnimationFrame(st.raf);
-      st.raf=0;
-      idleT=0;
-    }
-
-    /* ---------- events ---------- */
-    w.body.addEventListener('click',e=>{
-      const b=e.target.closest('[data-a]');if(!b)return;
-      const a=b.dataset.a;
-      if(a==='play'){
-        if(st.idx<0){toast('Pick a track first');return}
-        if(isSynth(st.el))Synth.toggle();
-        else if(st.el)st.el.paused?play():st.el.pause();
-        Audio2.init();
-      }
-      else if(a==='prev'){if(st.idx>0)load(st.idx-1);else seekTo(0)}
-      else if(a==='next')advance();
-      else if(a==='mute'){
-        audio.muted=!audio.muted;
-        w.body.querySelector('[data-a="mute"]').innerHTML=audio.muted?ICONS.mute:ICONS.vol;
-        Audio2.init();
-      }
-      else if(a==='shuffle'){
-        st.shuffle=!st.shuffle;
-        b.dataset.on=st.shuffle?'1':'0';
-        b.classList.toggle('on',st.shuffle);
-        toast(st.shuffle?'Shuffle on':'Shuffle off');
-      }
-      else if(a==='repeat'){
-        st.repeat=!st.repeat;
-        b.dataset.on=st.repeat?'1':'0';
-        b.classList.toggle('on',st.repeat);
-        toast(st.repeat?'Repeat on':'Repeat off');
-      }
-      else if(a==='openfile'){
-        const inp=el('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
-        inp.onchange=()=>{
-          [...inp.files].forEach(f=>addItem({
-            name:f.name,kind:'file',size:f.size,url:URL.createObjectURL(f),objUrl:true
-          }));
-          if(st.idx<0)load(0);
-          toast('Added '+inp.files.length+' file'+(inp.files.length>1?'s':''));
-        };
-        inp.click();
-      }
-    });
-    volInp.oninput=()=>{audio.volume=+volInp.value/100;audio.muted=+volInp.value===0};
-    const seekTo=e=>{
-      const r=seek.getBoundingClientRect();
-      const p=clamp((e.clientX-r.left)/r.width,0,1);
-      const d=curDur();
-      if(d)seek._to=p*d;
-    };
-    seek.onpointerdown=e=>{
-      seek.setPointerCapture(e.pointerId);seekTo(e);seek._d=true;
-      if(seek._to!=null){
-        if(isSynth(st.el))Synth.seek(seek._to);
-        else if(st.el)st.el.currentTime=seek._to;
-        seek._to=null;step();
-      }
-    };
-    seek.onpointermove=e=>{if(seek._d)seekTo(e)};
-    seek.onpointerup=()=>{seek._d=false;seek._to=null};
-
-    /* The synthesiser runs on its own timer, so the UI has to be repainted
-       from somewhere; 100 ms is smooth enough for a progress bar. */
-    const uiTimer=setInterval(()=>{
-      if(st.idx<0)return;
-      const on=isSynth(st.el)?Synth.playing:!!(st.el&&!st.el.paused);
-      if(on){step();if(!st.raf)drawViz()}
-      else{syncPlay();stopViz()}
-    },100);
-
-    /* seed the library */
-    TRACKS.forEach(song=>addItem({name:song.title,kind:'synth',song}));
-    renderList();
-    if(opts.track)load(opts.track);
-
-    return {destroy:()=>{
-      clearInterval(uiTimer);
-      stopViz();
-      Synth.stop();
-      audio.pause();
-      st.list.forEach(i=>{if(i.objUrl)URL.revokeObjectURL(i.objUrl)});
-    }};
-  }
-};
-
-
-/* ==================================================================
    SETTINGS
    src/kernel/18-settings.js
    ================================================================== */
@@ -7490,801 +7191,6 @@ const TRACKS=[
 
 
 /* ==================================================================
-   VIDEO
-   src/kernel/30-video.js
-   ================================================================== */
-
-/* ============================================================
-   VIDEO PLAYER
-   ============================================================
-   Two very different sources behind one set of controls:
-
-     'file'  a real <video> element from a local file or the virtual filesystem
-     'reel'  the generated reel in 31-reel.js, drawn to a canvas
-
-   The reel has no element, so it cannot be seeked by assigning currentTime and
-   it cannot go into Picture-in-Picture. Rather than scatter those special
-   cases through the UI, position, duration, rate and play state are all
-   routed through a small source layer; the controls only ever talk to that.
-
-     now()        current position in seconds
-     duration()   length in seconds
-     playing      is it running
-     seek(t)      jump
-     rate         playback speed
-
-   Frame delta is clamped at both ends. A backgrounded tab produces one huge
-   delta on return, which would otherwise teleport the reel seconds ahead. */
-APPS.video={
-  title:'Video',icon:ICONS.vid,desc:'ReelPlayer',w:980,h:620,
-  build(w,opts){
-    w.body.innerHTML=`<div class="vd">
-      <div class="vdStage" data-stage>
-        <video data-el playsinline style="display:none"></video>
-        <canvas data-canvas style="display:none"></canvas>
-        <div class="vdSubs" data-subs style="display:none"></div>
-        <div class="vdEmpty" data-empty>
-          <div style="width:56px;height:56px;opacity:.5">${ICONS.vid}</div>
-          <b>Nothing loaded</b>
-          <span>Play the generated reel, or open a video file from your computer.</span>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="btn pri" data-a="reel">${ICONS.play} Play demo reel</button>
-            <button class="btn" data-a="openfile">${ICONS.open} Open file…</button>
-          </div>
-        </div>
-        <div class="vdBadge" data-badge></div>
-        <div class="vdBig" data-bigplay>${ICONS.play}</div>
-      </div>
-      <div class="vdBar">
-        <button class="mbtn" data-a="prev" title="Previous">${ICONS.prev}</button>
-        <button class="mbtn play" data-a="play" title="Play / pause (space)">${ICONS.play}</button>
-        <button class="mbtn" data-a="next" title="Next">${ICONS.next}</button>
-        <span class="vdTime" data-time>0:00 / 0:00</span>
-        <div class="mdSeek vdSeek" data-seek><i style="width:0"></i><b style="left:0"></b><u data-chaps></u></div>
-        <span class="vdRate" data-rateBtn title="Playback speed">1.0x</span>
-        <button class="mbtn" data-a="cc" title="Subtitles (C)">CC</button>
-        <button class="mbtn" data-a="pip" title="Picture in picture (P)">${ICONS.pip}</button>
-        <button class="mbtn" data-a="full" title="Full screen (F)">${ICONS.full}</button>
-        <button class="mbtn" data-a="mute" title="Mute (M)" style="width:34px;height:34px">${ICONS.vol}</button>
-        <input type="range" min="0" max="100" value="80" data-vol style="width:72px;accent-color:var(--accent)" title="Volume">
-      </div>
-      <div class="toolbar" style="border-radius:11px">
-        <button class="btn" data-a="reel">${ICONS.vid} Demo reel</button>
-        <button class="btn" data-a="openfile">${ICONS.open} Open video…</button>
-        <button class="btn" data-a="srt">Load subtitles…</button>
-        <span class="sp"></span>
-        <span data-meta style="font-size:11px;color:#8ea0bd;font-family:var(--mono)"></span>
-      </div>
-      <div class="vdRecent" data-recent></div>
-    </div>`;
-    const stage=w.body.querySelector('[data-stage]'),
-      video=w.body.querySelector('[data-el]'),
-      canvas=w.body.querySelector('[data-canvas]'),
-      subsEl=w.body.querySelector('[data-subs]'),
-      emptyEl=w.body.querySelector('[data-empty]'),
-      badgeEl=w.body.querySelector('[data-badge]'),
-      bigEl=w.body.querySelector('[data-bigplay]'),
-      seek=w.body.querySelector('[data-seek]'),
-      chapsEl=w.body.querySelector('[data-chaps]'),
-      timeEl=w.body.querySelector('[data-time]'),
-      rateEl=w.body.querySelector('[data-rateBtn]'),
-      metaEl=w.body.querySelector('[data-meta]'),
-      recentEl=w.body.querySelector('[data-recent]'),
-      volInp=w.body.querySelector('[data-vol]'),
-      playBtn=w.body.querySelector('[data-a="play"]');
-    const vc=canvas.getContext('2d');
-    const st={src:null,kind:null,raf:0,last:0,time:0,rate:1,playing:false,
-      cues:null,ccOn:true,recentAuto:true,recent:LS.get('videoRecent',[])};
-    const RATES=[0.25,0.5,0.75,1,1.25,1.5,2,4];
-
-    /* ---------- source layer ---------- */
-    const isReel=()=>st.kind==='reel';
-    const now=()=>isReel()?st.time:(isFinite(video.currentTime)?video.currentTime:0);
-    const duration=()=>isReel()?Reel.duration:(isFinite(video.duration)?video.duration:0);
-    const setNow=t=>{
-      if(isReel())st.time=clamp(t,0,Reel.duration);
-      else if(isFinite(video.duration))video.currentTime=clamp(t,0,video.duration);
-      step();
-    };
-    const setRate=r=>{
-      st.rate=r;
-      if(!isReel())video.playbackRate=r;
-      /* toFixed then trim: (1).toFixed(2) is "1.00", and a fixed 2 decimals
-         reads as a setting rather than a speed control. */
-      rateEl.textContent=(Math.round(r*100)/100)+'x';
-      rateEl.classList.toggle('on',r!==1);
-      rateEl.dataset.rate=String(r);
-    };
-
-    /* ---------- rendering ---------- */
-    function sizeCanvas(){
-      const r=stage.getBoundingClientRect();
-      const d=Math.min(devicePixelRatio||1,2);
-      const w=Math.round(r.width*d),h=Math.round(r.height*d);
-      if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
-      vc.setTransform(d,0,0,d,0,0);
-      return r;
-    }
-    function frame(ts){
-      if(!st.playing)return;
-      st.raf=requestAnimationFrame(frame);
-      /* clamp both ends: a huge dt after a tab is backgrounded would skip the
-         reel forward by however long the user was away */
-      const dt=clamp((ts-st.last)/1000,0,.05);
-      st.last=ts;
-      if(isReel()){
-        st.time+=dt*st.rate;
-        if(st.time>=Reel.duration){st.time=Reel.duration;pause();onEnd();return}
-        const r=sizeCanvas();
-        Reel.render(vc,r.width,r.height,st.time,st.rate,Audio2.analyser());
-        paintSubs();
-        paintBadge();
-        step();
-      }
-    }
-    function onEnd(){
-      if(isReel()){
-        if(!watched){watched=true;Achievements.grant('DIRECTOR')}
-        setNow(0);
-        play();
-        return;
-      }
-      if(st.recentAuto)loadRecent(0);
-    }
-    function paintSubs(){
-      if(!st.ccOn||!st.cues){subsEl.style.display='none';subsEl.textContent='';return}
-      const cue=Subs.active(st.cues,now());
-      if(!cue){subsEl.style.display='none';subsEl.textContent='';return}
-      subsEl.style.display='';
-      /* keep the same element and only touch textContent when it changes,
-         otherwise the browser re-lays out the caption every frame */
-      if(subsEl.textContent!==cue.text)subsEl.textContent=cue.text;
-    }
-    function paintBadge(){
-      if(!isReel()){badgeEl.textContent='';return}
-      const i=Reel.chapterAt(st.time);
-      const ch=Reel.chapters[i];
-      const local=st.time-ch.t;
-      badgeEl.textContent=`CHAPTER ${i+1}/5 · ${ch.name.toUpperCase()} · ${fmtDur(local)}`;
-    }
-    function step(){
-      const d=duration(),t=now();
-      seek.querySelector('i').style.width=(d?t/d*100:0)+'%';
-      seek.querySelector('b').style.left=(d?t/d*100:0)+'%';
-      timeEl.textContent=fmtDur(t)+' / '+fmtDur(d);
-      if(!isReel())paintSubs();
-    }
-
-    /* ---------- transport ---------- */
-    function loadReel(){
-      unload();
-      st.kind='reel';st.src={name:'NEXUS Visual Systems — Reference Reel',reel:true};
-      st.cues=Reel.subtitles();
-      st.time=0;st.rate=1;
-      watched=false;
-      video.style.display='none';
-      canvas.style.display='';
-      emptyEl.style.display='none';
-      rateEl.textContent='1x';rateEl.classList.remove('on');rateEl.dataset.rate='1';
-      metaEl.textContent='generated at run time · no video file';
-      w.el.querySelector('.ttl').textContent='Reference Reel — Video';
-      drawChapters();
-      play();
-    }
-    function loadFile(name,url,objUrl,fromVfs){
-      unload();
-      st.kind='file';st.src={name,url,objUrl:!!objUrl,fromVfs:!!fromVfs};
-      st.cues=null;st.rate=1;
-      canvas.style.display='none';
-      video.style.display='';
-      emptyEl.style.display='none';
-      video.src=url;
-      video.volume=+volInp.value/100;
-      video.playbackRate=1;
-      rateEl.textContent='1x';rateEl.classList.remove('on');rateEl.dataset.rate='1';
-      metaEl.textContent=fromVfs?'virtual filesystem':'local file';
-      w.el.querySelector('.ttl').textContent=name+' — Video';
-      drawChapters();
-      if(fromVfs)autoSubtitles(url);
-      video.play().catch(()=>{syncPlay();bigEl.style.display=''});
-      remember(name);
-    }
-    function unload(){
-      if(st.playing)pause();
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-      st.kind=null;st.src=null;st.cues=null;st.time=0;
-    }
-    function play(){
-      if(!st.kind)return;
-      Audio2.init();Audio2.resume();
-      st.playing=true;
-      if(isReel()){
-        st.last=performance.now();
-        cancelAnimationFrame(st.raf);
-        st.raf=requestAnimationFrame(frame);
-      }else{
-        video.play().catch(()=>{st.playing=false;syncPlay()});
-      }
-      bigEl.style.display='none';
-      syncPlay();
-    }
-    function pause(){
-      st.playing=false;
-      cancelAnimationFrame(st.raf);st.raf=0;
-      if(!isReel())video.pause();
-      syncPlay();
-    }
-    function syncPlay(){
-      playBtn.innerHTML=st.playing?ICONS.pause:ICONS.play;
-      bigEl.style.display=st.playing?'none':'';
-    }
-    function toggle(){st.playing?pause():play()}
-    function drawChapters(){
-      chapsEl.innerHTML='';
-      if(!isReel())return;
-      Reel.chapters.forEach(c=>{
-        const u=el('u','',chapsEl);
-        u.style.left=(c.t/Reel.duration*100)+'%';
-        u.title=c.name;
-        u.dataset.t=c.t;
-      });
-    }
-    function remember(name){
-      st.recent=[name,...st.recent.filter(n=>n!==name)].slice(0,6);
-      LS.set('videoRecent',st.recent);
-      renderRecent();
-    }
-    /* Reopen a recent file by looking its name back up in the filesystem. */
-    function loadRecent(i){
-      const n=st.recent[i];
-      const hit=n&&VFS.search(n)[0];
-      const node=hit&&hit.node;
-      const url=node&&(node.dataUrl||node.blobUrl);
-      if(url)loadFile(node.name,url,false,true);
-    }
-    let watched=false;
-    function renderRecent(){
-      if(!st.recent.length){recentEl.innerHTML='';return}
-      recentEl.innerHTML='<span style="font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8ea0bd">Recent</span>';
-      st.recent.forEach(n=>{
-        const b=el('button','vdChip',recentEl);
-        b.textContent=n;
-        b.onclick=()=>{
-          /* The chip holds a display name, not a path. Look it back up rather
-             than trusting the label, and do not assume the file is still
-             there — the filesystem can be reset underneath us. */
-          const hit=VFS.search(n)[0];
-          const node=hit&&hit.node;
-          const url=node&&(node.dataUrl||node.blobUrl);
-          if(url)loadFile(node.name,url,false,true);
-          else toast('That file is no longer in the filesystem');
-        };
-      });
-    }
-    /* If a file with the same base name and a .srt extension exists, use it
-       without asking — subtitles that "just work" are the expected default. */
-    function autoSubtitles(url){
-      if(!url||url.startsWith('blob:'))return;
-      const base=url.replace(/\.[^./]+$/,'');
-      const hit=VFS.search(base+'.srt')[0];
-      const node=hit&&hit.node;
-      if(node&&node.text!=null){
-        st.cues=Subs.parse(node.text);
-        if(st.cues.length)metaEl.textContent='virtual filesystem · subtitles loaded';
-      }
-    }
-
-    /* ---------- input ---------- */
-    w.body.addEventListener('click',e=>{
-      const b=e.target.closest('[data-a]');
-      if(b){
-        const a=b.dataset.a;
-        if(a==='play')toggle();
-        else if(a==='next'||a==='prev'){/* single source; rewind instead of change */setNow(0)}
-        else if(a==='reel')loadReel();
-        else if(a==='cc'){
-          st.ccOn=!st.ccOn;
-          b.classList.toggle('on',st.ccOn);
-          paintSubs();
-          toast(st.ccOn?'Subtitles on':'Subtitles off');
-        }
-        else if(a==='full')toggleFullscreen();
-        else if(a==='pip')togglePip();
-        else if(a==='mute'){
-          video.muted=!video.muted;
-          w.body.querySelector('[data-a="mute"]').innerHTML=video.muted?ICONS.mute:ICONS.vol;
-          Audio2.init();
-        }
-        else if(a==='openfile'){
-          const inp=el('input');inp.type='file';inp.accept='video/*';inp.multiple=false;
-          inp.onchange=()=>{
-            const f=inp.files[0];
-            if(f)loadFile(f.name,URL.createObjectURL(f),true,false);
-          };
-          inp.click();
-        }
-        else if(a==='srt')loadSrt();
-        return;
-      }
-      if(e.target.closest('[data-rateBtn]')){
-        const i=RATES.indexOf(st.rate);
-        setRate(RATES[(i+1)%RATES.length]);
-        return;
-      }
-      /* clicking the picture toggles playback, the way every player does */
-      if(e.target===stage||e.target===video||e.target===canvas){
-        if(st.kind)toggle();
-        else bigEl.click();
-      }
-    });
-    volInp.oninput=()=>{
-      video.volume=+volInp.value/100;
-      video.muted=+volInp.value===0;
-      w.body.querySelector('[data-a="mute"]').innerHTML=video.muted?ICONS.mute:ICONS.vol;
-    };
-    function loadSrt(){
-      const inp=el('input');inp.type='file';inp.accept='.srt,text/plain';
-      inp.onchange=()=>{
-        const f=inp.files[0];
-        if(!f)return;
-        const r=new FileReader();
-        r.onload=()=>{
-          st.cues=Subs.parse(r.result);
-          st.ccOn=true;
-          w.body.querySelector('[data-a="cc"]').classList.add('on');
-          paintSubs();
-          toast(st.cues.length?st.cues.length+' subtitle cues loaded':'No cues found in that file');
-        };
-        r.readAsText(f);
-      };
-      inp.click();
-    }
-    const seekTo=e=>{
-      const r=seek.getBoundingClientRect();
-      setNow(clamp((e.clientX-r.left)/r.width,0,1)*duration());
-    };
-    seek.onpointerdown=e=>{
-      seek.setPointerCapture(e.pointerId);seekTo(e);seek._d=true;
-    };
-    seek.onpointermove=e=>{if(seek._d)seekTo(e)};
-    seek.onpointerup=()=>{seek._d=false};
-    /* clicking a chapter marker jumps straight to it */
-    chapsEl.onclick=e=>{
-      const u=e.target.closest('u');
-      if(u)setNow(+u.dataset.t);
-    };
-    function toggleFullscreen(){
-      if(document.fullscreenElement)document.exitFullscreen();
-      else if(stage.requestFullscreen)stage.requestFullscreen().catch(()=>toast('Full screen was refused'));
-      else toast('Full screen is not available here');
-    }
-    function togglePip(){
-      if(isReel()){toast('Picture-in-picture needs a real video file');return}
-      if(!video.requestPictureInPicture){toast('Picture-in-picture is not supported in this browser');return}
-      if(document.pictureInPictureElement)document.exitPictureInPicture();
-      else video.requestPictureInPicture().catch(()=>toast('Picture-in-picture was refused'));
-    }
-    /* chapter keys on a real file jump by 10% of its length */
-    w.el.addEventListener('keydown',e=>{
-      if(!st.kind)return;
-      if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;
-      const k=e.key.toLowerCase();
-      if(k===' '||e.code==='Space'){e.preventDefault();toggle()}
-      else if(k==='f'){e.preventDefault();toggleFullscreen()}
-      else if(k==='p'){e.preventDefault();togglePip()}
-      else if(k==='c'){e.preventDefault();w.body.querySelector('[data-a="cc"]').click()}
-      else if(k==='m'){e.preventDefault();w.body.querySelector('[data-a="mute"]').click()}
-      else if(k==='r'){e.preventDefault();setNow(0);play()}
-      else if(k==='arrowright'){e.preventDefault();setNow(now()+10)}
-      else if(k==='arrowleft'){e.preventDefault();setNow(now()-10)}
-      else if(k==='arrowup'){e.preventDefault();volInp.value=clamp(+volInp.value+5,0,100);volInp.oninput()}
-      else if(k==='arrowdown'){e.preventDefault();volInp.value=clamp(+volInp.value-5,0,100);volInp.oninput()}
-    });
-    video.addEventListener('play',()=>{if(!isReel()){st.playing=true;syncPlay();bigEl.style.display='none'}});
-    video.addEventListener('pause',()=>{if(!isReel()){st.playing=false;syncPlay()}});
-    video.addEventListener('ended',()=>{st.playing=false;syncPlay();onEnd()});
-    video.addEventListener('loadedmetadata',()=>{
-      if(isReel())return;
-      const d=isFinite(video.duration)?video.duration:0;
-      metaEl.textContent=`${video.videoWidth}×${video.videoHeight} · ${fmtDur(d)}`;
-      if(!st.playing)bigEl.style.display='';
-      step();
-    });
-    video.addEventListener('timeupdate',step);
-
-    renderRecent();
-    setRate(1);
-    syncPlay();
-    if(opts.path){
-      const n=VFS.node(opts.path);
-      if(n&&(n.dataUrl||n.blobUrl))loadFile(n.name,n.dataUrl||n.blobUrl,false,true);
-    }else if(opts.reel)loadReel();
-
-    return {destroy:()=>{unload();cancelAnimationFrame(st.raf)}};
-  }
-};
-
-
-/* ==================================================================
-   REEL
-   src/kernel/31-reel.js
-   ================================================================== */
-
-/* ============================================================
-   GENERATED DEMO REEL
-   ============================================================
-   A real <video> element cannot be fed a synthetic source, so the reel is
-   drawn to a canvas instead. That is enough to make every player control
-   meaningful — seek, speed, chapters and subtitles all have something real to
-   act on — as long as one rule holds:
-
-     render(ctx, t) must be a pure function of t.
-
-   Nothing may accumulate between frames and nothing may call Math.random() in
-   the draw path, or dragging the scrubber would reshuffle the starfield and
-   the reel would stop being a video. All randomness comes from hash(), a
-   deterministic function of an integer index, so frame N looks the same
-   whether you arrived at it by playing or by seeking.
-
-   Chapters:
-     0    ORBITAL      orbital sunrise
-     1    CITY GRID    parallax skyline
-     2    DATA STREAM  wireframe tunnel and number rain
-     3    SPECTRUM     reactive landscape, follows the music if it is playing
-     4    SIGNAL LOST  degradation into static
-*/
-
-const Reel={
-  /* deterministic noise in [-1,1] */
-  hash(n){
-    let x=(n|0)*374761393+668265263;
-    x=(x^(x>>13))*1274126177;
-    return ((x^(x>>16))>>>0)/4294967295;
-  },
-  hue:188,
-  chapters:[
-    {t:0,   name:'Orbital',    dur:24},
-    {t:24,  name:'City Grid',  dur:24},
-    {t:48,  name:'Data Stream',dur:24},
-    {t:72,  name:'Spectrum',   dur:24},
-    {t:96,  name:'Signal Lost',dur:22}
-  ],
-  duration:118,
-
-  chapterAt(t){
-    for(let i=this.chapters.length-1;i>=0;i--)if(t>=this.chapters[i].t)return i;
-    return 0;
-  },
-  progress(t){return clamp(t/this.duration,0,1)},
-
-  subtitles(){
-    return Subs.parse([
-      '1',
-      '00:00:01,000 --> 00:00:07,000',
-      'NEXUS VISUAL SYSTEMS',
-      'reference reel — sequence one',
-      '',
-      '2',
-      '00:00:09,000 --> 00:00:15,000',
-      'Every frame in this reel is generated',
-      'at run time. No video file is loaded.',
-      '',
-      '3',
-      '00:00:17,000 --> 00:00:23,500',
-      'The renderer is a pure function of time,',
-      'so the scrubber lands on the same frame.',
-      '',
-      '4',
-      '00:00:26,000 --> 00:00:33,000',
-      'ORBITAL',
-      'terminator sweep at 04:12 sunrise',
-      '',
-      '5',
-      '00:00:36,000 --> 00:00:44,000',
-      'Light wraps the limb. The city below',
-      'has already switched to night.',
-      '',
-      '6',
-      '00:00:50,000 --> 00:00:58,000',
-      'CITY GRID',
-      'four parallax planes, seeded by index',
-      '',
-      '7',
-      '00:01:01,000 --> 00:01:09,000',
-      'Every window is lit by a hash of its own',
-      'address, so it never flickers on re-render.',
-      '',
-      '8',
-      '00:01:14,000 --> 00:01:22,000',
-      'DATA STREAM',
-      'tunnel depth 96 units',
-      '',
-      '9',
-      '00:01:25,000 --> 00:01:32,000',
-      'The rain is a rolling buffer of digits',
-      'sampled from the same hash.',
-      '',
-      '10',
-      '00:01:38,000 --> 00:01:46,000',
-      'SPECTRUM',
-      'this chapter follows live audio if any is playing',
-      '',
-      '11',
-      '00:01:49,000 --> 00:01:56,000',
-      'Otherwise it falls back to a fixed waveform,',
-      'which keeps seeking deterministic.',
-      '',
-      '12',
-      '00:02:00,000 --> 00:02:07,000',
-      'SIGNAL LOST',
-      'carrier degrading',
-      '',
-      '13',
-      '00:02:10,000 --> 00:02:16,500',
-      'End of reel.',
-      'Press R to restart, F for full screen.'
-    ].join('\n'));
-  },
-
-  /* ---------- helpers ---------- */
-  sky(g,W,H,top,bot){
-    const gr=g.createLinearGradient(0,0,0,H);
-    gr.addColorStop(0,top);gr.addColorStop(1,bot);
-    g.fillStyle=gr;g.fillRect(0,0,W,H);
-  },
-  vignette(g,W,H,amount){
-    const gr=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.72);
-    gr.addColorStop(0,'rgba(0,0,0,0)');
-    gr.addColorStop(1,`rgba(0,0,0,${amount==null?.55:amount})`);
-    g.fillStyle=gr;g.fillRect(0,0,W,H);
-  },
-  scanlines(g,W,H,gap,alpha){
-    g.fillStyle=`rgba(0,0,0,${alpha})`;
-    for(let y=0;y<H;y+=gap)g.fillRect(0,y,W,1);
-  },
-  caption(g,W,H,text,sub){
-    g.font='600 13px ui-monospace,Consolas,monospace';
-    g.textAlign='left';
-    g.fillStyle='rgba(255,255,255,.55)';
-    g.fillText(text,26,H-46);
-    if(sub){
-      g.font='11px ui-monospace,Consolas,monospace';
-      g.fillStyle='rgba(255,255,255,.32)';
-      g.fillText(sub,26,H-28);
-    }
-  },
-  timecode(g,W,H,t,rate,idx){
-    g.font='11px ui-monospace,Consolas,monospace';
-    g.textAlign='right';
-    g.fillStyle='rgba(255,255,255,.45)';
-    g.fillText(`TC ${fmtDur(t)}   ${rate}x   SC ${String(idx+1).padStart(2,'0')}/05`,W-26,H-28);
-    g.textAlign='left';
-  },
-
-  /* ---------- scenes ---------- */
-  orbital(g,W,H,t){
-    this.sky(g,W,H,'#050818','#0d1030');
-    const cx=W*.5,cy=H*1.5,R=Math.min(W,H)*1.05;
-    /* stars, fixed by index */
-    for(let i=0;i<170;i++){
-      const x=this.hash(i*3+1)*W, y=this.hash(i*3+2)*H*.92;
-      const tw=.5+.5*Math.sin(t*2+i);
-      g.fillStyle=`rgba(255,255,255,${.15+this.hash(i*3+3)*.5*tw})`;
-      g.fillRect(x,y,1.6,1.6);
-    }
-    /* the limb, with the terminator sweeping across */
-    g.save();
-    g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.clip();
-    const lit=g.createLinearGradient(cx-R,cy-R,cx+R*.2,cy);
-    const sweep=(t/24)*.8;
-    lit.addColorStop(0,'#0a1c3a');
-    lit.addColorStop(clamp(sweep,0.02,.96),'#2f6fb5');
-    lit.addColorStop(clamp(sweep+.06,.05,.99),'#ffd9a0');
-    lit.addColorStop(1,'#02040c');
-    g.fillStyle=lit;g.fillRect(0,0,W,H);
-    /* city lights on the night side */
-    for(let i=0;i<70;i++){
-      const a=this.hash(i*5+11)*Math.PI*2, d=R*.82;
-      const x=cx+Math.cos(a)*d, y=cy+Math.sin(a)*d;
-      if(y<cy-R*.82)continue;
-      g.fillStyle=`rgba(255,200,120,${.2+this.hash(i*5+12)*.6})`;
-      g.fillRect(x,y,1.5,1.5);
-    }
-    g.restore();
-    g.strokeStyle='rgba(120,200,255,.5)';g.lineWidth=1.5;
-    g.beginPath();g.arc(cx,cy,R,Math.PI*1.05,Math.PI*1.95);g.stroke();
-    g.strokeStyle='rgba(120,200,255,.14)';
-    for(let i=1;i<4;i++){g.beginPath();g.arc(cx,cy,R*(1-i*.005),Math.PI*1.05,Math.PI*1.95);g.stroke()}
-    this.caption(g,W,H,'ORBITAL','terminator sweep');
-  },
-  cityGrid(g,W,H,t){
-    const hor=H*.56;
-    const sun=g.createLinearGradient(0,hor-H*.3,0,hor);
-    sun.addColorStop(0,'#ff2e63');sun.addColorStop(.55,'#b06bff');sun.addColorStop(1,'#ffc857');
-    g.fillStyle='#0a0418';g.fillRect(0,0,W,hor);
-    g.fillStyle=sun;
-    g.beginPath();g.arc(W*.5,hor-14,Math.min(W,H)*.16,Math.PI,0);g.fill();
-    /* sun bands */
-    g.fillStyle='#0a0418';
-    for(let i=0;i<7;i++){
-      const y=hor-6-i*Math.min(W,H)*.022;
-      g.fillRect(W*.5-Math.min(W,H)*.17,y,Math.min(W,H)*.34,2+i*1.5);
-    }
-    /* four parallax skyline planes, each seeded by index and offset by t */
-    for(let p=3;p>=0;p--){
-      const par=0.06+p*.10, w=Math.max(18,W*.055-p*7);
-      const base=this.hash(p*17+3)*W;
-      g.fillStyle=`rgba(${8+p*4},${6+p*6},${20+p*10},1)`;
-      const off=((t*par*40)%W);
-      for(let k=-1;k<Math.ceil(W/w)+1;k++){
-        const bi=Math.floor(base/w)+k;
-        const bh=H*(.10+this.hash(bi*7+p*31)*.26);
-        const x=k*w-off%w;
-        g.fillRect(x,hor-bh,w*.86,bh);
-        if(p>=2){
-          g.fillStyle=`rgba(255,${180+p*20},${90+p*40},${.10+p*.12})`;
-          const rows=Math.floor(bh/13);
-          for(let r=0;r<rows;r++)for(let cI=0;cI<Math.floor(w/9);cI++){
-            if(this.hash(bi*997+r*31+cI*7+p)<.42)continue;
-            g.fillRect(x+3+cI*9,hor-bh+5+r*13,3,4);
-          }
-          g.fillStyle=`rgba(${8+p*4},${6+p*6},${20+p*10},1)`;
-        }
-      }
-    }
-    /* perspective floor */
-    g.fillStyle='#07030f';g.fillRect(0,hor,W,H-hor);
-    g.strokeStyle='rgba(176,107,255,.55)';g.lineWidth=1;
-    for(let i=0;i<18;i++){
-      const y=hor+Math.pow(i/18,2.1)*(H-hor);
-      g.globalAlpha=1-i/20;
-      g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();
-    }
-    g.globalAlpha=1;
-    for(let i=-8;i<=8;i++){
-      g.beginPath();g.moveTo(W/2+i*6,hor);g.lineTo(W/2+i*W*.16,H);g.stroke();
-    }
-    this.caption(g,W,H,'CITY GRID','four parallax planes');
-  },
-  dataStream(g,W,H,t){
-    g.fillStyle='#000308';g.fillRect(0,0,W,H);
-    /* wireframe tunnel, 96 units of depth */
-    const cx=W/2,cy=H/2,R=Math.min(W,H)*.46;
-    g.strokeStyle='rgba(55,224,255,.5)';g.lineWidth=1;
-    for(let i=0;i<26;i++){
-      const d=((i/26)+((t*.22)%(1/26)))%1;
-      const k=Math.pow(1-d,3);
-      const r=R*k;
-      g.globalAlpha=k*.9;
-      const sides=8, rot=t*.35+i*.2;
-      g.beginPath();
-      for(let s=0;s<=sides;s++){
-        const a=rot+s/sides*Math.PI*2;
-        const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
-        s?g.lineTo(x,y):g.moveTo(x,y);
-      }
-      g.closePath();g.stroke();
-    }
-    g.globalAlpha=1;
-    /* number rain — column x and row y are hashed, the offset scrolls */
-    g.font='13px ui-monospace,Consolas,monospace';
-    const cols=Math.floor(W/16);
-    for(let c=0;c<cols;c++){
-      const h1=this.hash(c*13+5);
-      const speed=40+h1*90;
-      const head=(t*speed+h1*3000)%(H+40);
-      for(let r=0;r<14;r++){
-        const y=H-((head+r*20)%(H+40));        const a=(1-r/14)*.85;
-        const d=this.hash(c*211+r*17+((Math.floor(t*2)+r)%7));
-        g.fillStyle=`rgba(90,${200+d*55},${150+d*80},${a})`;
-        g.fillText('0123456789ABCDEF'[(d*16)|0],c*16+6,y);
-      }
-    }
-    this.caption(g,W,H,'DATA STREAM','tunnel depth 26 rings');
-  },
-  spectrum(g,W,H,t,ana){
-    g.fillStyle='#04060f';g.fillRect(0,0,W,H);
-    const bins=new Uint8Array(128);
-    let live=false;
-    if(ana&&ana.getByteFrequencyData){ana.getByteFrequencyData(bins);live=true}
-    const N=64,hor=H*.82;
-    /* horizon glow */
-    const gl=g.createLinearGradient(0,hor-H*.2,0,hor+10);
-    gl.addColorStop(0,'rgba(55,224,255,0)');gl.addColorStop(1,'rgba(55,224,255,.22)');
-    g.fillStyle=gl;g.fillRect(0,hor-H*.2,W,H*.2+10);
-    for(let i=0;i<N;i++){
-      let v;
-      if(live)v=bins[1+Math.floor(Math.pow(i/N,1.7)*110)]/255;
-      else v=.30+.30*Math.abs(Math.sin(t*1.7+i*.42))+.12*Math.sin(t*5+i);
-      v=clamp(v,0,1);
-      const bw=W/N;
-      const bh=v*(hor-H*.22);
-      const gr=g.createLinearGradient(0,hor,0,hor-bh);
-      gr.addColorStop(0,'rgba(61,220,132,.25)');
-      gr.addColorStop(1,'rgba(255,200,87,.95)');
-      g.fillStyle=gr;
-      g.fillRect(i*bw+1,hor-bh,bw-2,bh);
-    }
-    g.strokeStyle='rgba(61,220,132,.7)';g.lineWidth=1.5;
-    g.beginPath();g.moveTo(0,hor);g.lineTo(W,hor);g.stroke();
-    /* reflection */
-    g.globalAlpha=.16;
-    for(let i=0;i<N;i++){
-      const bw=W/N;
-      const v=live?bins[1+Math.floor(Math.pow(i/N,1.7)*110)]/255
-                  :.30+.30*Math.abs(Math.sin(t*1.7+i*.42))+.12*Math.sin(t*5+i);
-      g.fillStyle='rgba(255,200,87,1)';
-      g.fillRect(i*bw+1,hor,bw-2,v*40);
-    }
-    g.globalAlpha=1;
-    this.caption(g,W,H,'SPECTRUM',live?'following live audio':'fixed waveform');
-  },
-  signalLost(g,W,H,t){
-    const k=(t-96)/22;
-    this.sky(g,W,H,'#120206','#000000');
-    /* rolling horizontal tear bands */
-    for(let i=0;i<9;i++){
-      const y=this.hash(i*41)*H;
-      const h=2+this.hash(i*41+1)*10*(.4+k);
-      const off=this.hash(i*41+2)*W;
-      g.fillStyle=`rgba(${40+i*8},${10+i*4},${30+i*10},${.10+k*.12})`;
-      g.fillRect((off+t*40*(i+1))%W-40,y,60,h);
-    }
-    /* static blocks grow with the degradation */
-    const blocks=Math.floor(k*k*260);
-    for(let i=0;i<blocks;i++){
-      const x=this.hash(i*97+1)*W, y=this.hash(i*97+2)*H;
-      const w=2+this.hash(i*97+3)*46, h=2+this.hash(i*97+4)*9;
-      g.fillStyle=`rgba(${180*this.hash(i*97+5)},${200},${255},${.04+this.hash(i*97+6)*.16})`;
-      g.fillRect(x,y,w,h);
-    }
-    /* the logo resolving out of the noise */
-    const a=clamp((k-.45)*2.6,0,1);
-    g.textAlign='center';
-    g.font='700 '+Math.round(Math.min(W*.09,64))+'px ui-monospace,Consolas,monospace';
-    g.fillStyle=`rgba(55,224,255,${a*(.7+.3*Math.sin(t*9))})`;
-    g.fillText('NEXUS',W/2,H*.44);
-    g.font='12px ui-monospace,Consolas,monospace';
-    g.fillStyle=`rgba(176,107,255,${a})`;
-    g.fillText('END OF SEQUENCE',W/2,H*.44+30);
-    g.textAlign='left';
-    this.scanlines(g,W,H,3,.10+k*.28);
-    this.vignette(g,W,H,.45+k*.35);
-    this.caption(g,W,H,'SIGNAL LOST','carrier degrading');
-  },
-
-  /* ---------- entry point ---------- */
-  render(g,W,H,t,rate,ana){
-    const idx=this.chapterAt(t);
-    const ch=this.chapters[idx];
-    const local=Math.max(0,t-ch.t);
-    g.save();
-    /* Reel is authored 16:9; letterbox into whatever the stage is so the
-       player is not forced to distort it. */
-    const target=W/H, src=16/9;
-    let dw=W,dh=H,dx=0,dy=0;
-    if(target>src){dh=H;dw=H*src;dx=(W-dw)/2}
-    else{dw=W;dh=W/src;dy=(H-dh)/2}
-    g.translate(dx,dy);
-    g.beginPath();g.rect(0,0,dw,dh);g.clip();
-    if(idx===0)this.orbital(g,dw,dh,local);
-    else if(idx===1)this.cityGrid(g,dw,dh,local);
-    else if(idx===2)this.dataStream(g,dw,dh,local);
-    else if(idx===3)this.spectrum(g,dw,dh,local,ana);
-    else this.signalLost(g,dw,dh,local);
-    g.restore();
-    /* bars are outside the clip so the frame reads as letterboxed footage */
-    if(dy>0){g.fillStyle='#000';g.fillRect(0,0,W,dy);g.fillRect(0,H-dy,W,dy)}
-    if(dx>0){g.fillStyle='#000';g.fillRect(0,0,dx,H);g.fillRect(W-dx,0,dx,H)}
-    this.timecode(g,W,H,t,rate,idx);
-    this.vignette(g,W,H,.35);
-  }
-};
-
-
-/* ==================================================================
    SUBTITLES
    src/kernel/32-subtitles.js
    ================================================================== */
@@ -8398,7 +7304,7 @@ const Subs={
     DEFAULT_SETTINGS, DESKTOP_APPS, Diag, EXT_ICON, Eggs, GAMES,
     HL, ICONS, IDEAS_TEXT, INSTRUMENTS, KONAMI, LS,
     MONTHS, NEXUS, NEXUS_FORTUNES, NEXUS_HELP, NEXUS_JOKES, NEXUS_PAGES,
-    Notify, Pinned, Reel, S, SECRET_TEXT, SETTING_CHOICES,
+    Notify, Pinned, S, SECRET_TEXT, SETTING_CHOICES,
     SYNTH_STEP, Subs, Synth, THEMES, TRACKS, VFS,
     WALLPAPERS, WELCOME_TEXT, WM, Wall, ago, applySettings,
     applyTheme, boot, buildRacer, buildSnake, cascade, clamp,
@@ -8425,6 +7331,1154 @@ const Subs={
 
 /* KERNEL PHASE COMPLETE - ctx.core opens here, and not before. */
 KERNEL_CTX.__kernelDone();
+
+
+/* MODULE: music  dir: src/apps/music */
+(function () {
+  'use strict';
+  KERNEL_CTX.__deps = [];
+  var __exports = {};
+
+
+/* ==================================================================
+   ENTRY
+   src/apps/music/entry.js
+   ================================================================== */
+
+/* ============================================================
+   MUSIC - synthesiser library + local audio playback
+   ------------------------------------------------------------
+   This is an APP module, so it is handed the kernel surface through
+   ctx.core. Synth and TRACKS are still kernel names: they leave the
+   kernel in a later task, and until then there is nothing to ctx.use().
+   ============================================================ */
+function register(ctx) {
+  const { Achievements, APPS, Audio2, ICONS, Synth, TRACKS,
+    clamp, el, esc, fmtBytes, fmtDur, toast } = ctx.core;
+
+  APPS.music={
+    title:'Music',icon:ICONS.aud,desc:'NexusPlayer',w:900,h:600,
+    build(w,opts){
+      w.body.innerHTML=`<div class="md">
+        <div class="mdMain">
+          <div class="mdStage" data-stage>
+            <canvas id="muViz"></canvas>
+            <div class="muNow" data-now>
+              <div class="muArt" data-art></div>
+              <b data-title>No track selected</b>
+              <span data-sub>Pick something from the library, or open a local audio file.</span>
+            </div>
+          </div>
+          <div class="mdCtrl">
+            <button class="mbtn" data-a="prev" title="Previous">${ICONS.prev}</button>
+            <button class="mbtn play" data-a="play" title="Play / pause">${ICONS.play}</button>
+            <button class="mbtn" data-a="next" title="Next">${ICONS.next}</button>
+            <div class="mdSeek" data-seek><i style="width:0"></i><b style="left:0"></b></div>
+            <span class="mdTime" data-time>0:00 / 0:00</span>
+            <button class="mbtn" data-a="mute" title="Mute" style="width:34px;height:34px">${ICONS.vol}</button>
+            <input type="range" min="0" max="100" value="80" data-vol style="width:80px;accent-color:var(--accent)" title="Player volume">
+          </div>
+          <div class="toolbar" style="border-radius:11px">
+            <button class="btn" data-a="openfile">${ICONS.open} Open audio file…</button>
+            <button class="btn" data-a="shuffle" data-on="0">Shuffle</button>
+            <button class="btn" data-a="repeat" data-on="1">Repeat</button>
+            <span class="sp"></span>
+            <span data-meta style="font-size:11px;color:#8ea0bd;font-family:var(--mono)"></span>
+          </div>
+        </div>
+        <div class="mdList">
+          <div style="padding:10px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8ea0bd">Library</div>
+          <div data-items style="flex:1;overflow-y:auto"></div>
+        </div>
+      </div>`;
+      const stage=w.body.querySelector('[data-stage]'),
+        viz=w.body.querySelector('#muViz'),
+        itemsEl=w.body.querySelector('[data-items]'),
+        seek=w.body.querySelector('[data-seek]'),
+        timeEl=w.body.querySelector('[data-time]'),
+        metaEl=w.body.querySelector('[data-meta]'),
+        nowEl=w.body.querySelector('[data-now]'),
+        titleEl=w.body.querySelector('[data-title]'),
+        subEl=w.body.querySelector('[data-sub]'),
+        artEl=w.body.querySelector('[data-art]'),
+        volInp=w.body.querySelector('[data-vol]'),
+        playBtn=w.body.querySelector('[data-a="play"]');
+
+      /* A detached <audio> for user files. The synthesiser needs no element at
+         all — it writes straight onto the bus. */
+      const audio=el('audio');audio.preload='metadata';
+      const st={list:[],idx:-1,el:null,raf:0,shuffle:false,repeat:true,elUrl:null};
+
+      const isSynth=it=>it&&it.kind==='synth';
+      /* Position and length come from the synthesiser or the element, so the
+         rest of the app never has to care which one is loaded. */
+      const curTime=()=>isSynth(st.el)?Synth.time():(st.el?st.el.currentTime:0);
+      const curDur=()=>isSynth(st.el)?Synth.duration():(st.el&&isFinite(st.el.duration)?st.el.duration:0);
+
+      function addItem(item){st.list.push(item);renderList()}
+
+      function artFor(it){
+        if(!it)return '';
+        const hue=isSynth(it)?it.song.hue:200;
+        return `<div style="position:absolute;inset:0;background:
+          radial-gradient(120% 120% at 30% 20%,hsl(${hue} 90% 55% / .55),transparent 62%),
+          radial-gradient(90% 90% at 78% 82%,hsl(${(hue+58)%360} 90% 55% / .42),transparent 60%)"></div>`;
+      }
+      function renderList(){
+        itemsEl.innerHTML='';
+        if(!st.list.length){
+          itemsEl.innerHTML='<div style="padding:14px;font-size:11.5px;color:#8ea0bd;line-height:1.6">Playlist is empty.</div>';
+          return;
+        }
+        st.list.forEach((it,i)=>{
+          const b=el('button','mdItem'+(i===st.idx?' on':''),itemsEl);
+          const sub=isSynth(it)
+            ? `${it.song.artist} · ${it.song.bpm} BPM`
+            : `${fmtBytes(it.size||0)}`;
+          const dur=isSynth(it)?fmtDur(Synth.durationOf(it.song)):fmtDur(it.el?it.el.duration:0);
+          b.innerHTML=`<span class="ic">${isSynth(it)?ICONS.aud:ICONS.file}</span>
+            <span class="nm"><b style="display:block;font-weight:600">${esc(it.name)}</b>
+              <span style="font-size:9.5px;color:#8ea0bd">${esc(sub)}</span></span>
+            <span style="font-size:9.5px;color:#8ea0bd;font-family:var(--mono)">${dur}</span>
+            <span class="x" data-x>×</span>`;
+          b.onclick=e=>{if(e.target.dataset.x)return;load(i)};
+          b.querySelector('[data-x]').onclick=e=>{
+            e.stopPropagation();
+            if(st.idx===i)stopAll();
+            if(it.objUrl)URL.revokeObjectURL(it.objUrl);
+            if(isSynth(it)&&st.idx===i)Synth.stop();
+            st.list.splice(i,1);
+            if(st.idx>i)st.idx--;
+            renderList();
+          };
+        });
+      }
+
+      function stopAll(){
+        if(isSynth(st.el))Synth.pause();
+        else if(st.el)st.el.pause();
+        stopViz();
+      }
+      function load(i){
+        if(i<0||i>=st.list.length)return;
+        stopAll();
+        st.idx=i;
+        const it=st.list[i];
+        st.el=it;
+        if(isSynth(it)){
+          Synth.load(it.song);
+          listenDone=false;
+          play();
+        }else{
+          audio.src=it.url;
+          audio.volume=+volInp.value/100;
+          audio.play().then(()=>{syncPlay();drawViz()})
+            .catch(()=>{syncPlay();toast('Press play to start')});
+        }
+        titleEl.textContent=it.name;
+        subEl.textContent=isSynth(it)
+          ? `${it.song.artist} · ${it.song.bpm} BPM · ${it.song.key} · synthesised live`
+          : 'local file';
+        artEl.innerHTML=artFor(it);
+        nowEl.classList.add('live');
+        w.el.querySelector('.ttl').textContent=it.name+' — Music';
+        renderList();
+      }
+      function play(){
+        Audio2.init();Audio2.resume();
+        if(isSynth(st.el))Synth.play();
+        else if(st.el)st.el.play().catch(()=>{});
+        syncPlay();
+        drawViz();
+      }
+      function syncPlay(){
+        const on=isSynth(st.el)?Synth.playing:!!(st.el&&!st.el.paused);
+        playBtn.innerHTML=on?ICONS.pause:ICONS.play;
+      }
+      function advance(){
+        if(!st.list.length)return;
+        let n;
+        if(st.shuffle&&st.list.length>1){
+          do{n=0|Math.random()*st.list.length}while(n===st.idx);
+        }else n=st.idx+1;
+        if(n>=st.list.length){
+          if(!st.repeat){syncPlay();return}
+          n=0;
+        }
+        load(n);
+      }
+      /* A track only counts once it has actually run to the end. Without this
+         guard, skipping to the end of a track grants the achievement and it
+         stops meaning anything. */
+      let listenDone=false;
+      Synth.onend=()=>{
+        if(!listenDone){
+          listenDone=true;
+          Achievements.grant('DJ');
+        }
+        advance();
+      };
+      const step=()=>{
+        const d=curDur(),t=curTime();
+        seek.querySelector('i').style.width=(d?t/d*100:0)+'%';
+        seek.querySelector('b').style.left=(d?t/d*100:0)+'%';
+        timeEl.textContent=fmtDur(t)+' / '+fmtDur(d);
+      };
+
+      /* ---------- visualiser ---------- */
+      const vc=viz.getContext('2d');
+      const bins=new Uint8Array(128);
+      let idleT=0;
+      function sizeCanvas(){
+        const r=viz.getBoundingClientRect();
+        const d=Math.min(devicePixelRatio||1,2);
+        if(viz.width!==Math.round(r.width*d)){
+          viz.width=Math.round(r.width*d);viz.height=Math.round(r.height*d);
+          vc.setTransform(d,0,0,d,0,0);
+        }
+        return r;
+      }
+      function drawViz(){
+        stopViz();
+        const frame=()=>{
+          st.raf=requestAnimationFrame(frame);
+          const r=sizeCanvas(),W=r.width,H=r.height;
+          const t=curTime(),d=curDur();
+          /* Mirrors the transport so the bars sweep instead of jumping. */
+          const p=d?t/d:0;
+          vc.clearRect(0,0,W,H);
+          const ana=Audio2.spectrum(bins);
+          const n=48,gap=2,bw=(W-gap*(n-1))/n;
+          const hue=isSynth(st.el)?st.el.song.hue:200;
+          for(let i=0;i<n;i++){
+            let v;
+            if(ana){
+              /* Fold 128 bins down to 48 bars logarithmically, so bass does not
+                 own the left third and the treble is not a flat line. */
+              const lo=Math.floor(Math.pow(i/n,1.9)*120)+1;
+              const hi=Math.max(lo+1,Math.floor(Math.pow((i+1)/n,1.9)*120)+1);
+              let m=0;
+              for(let k=lo;k<hi&&k<bins.length;k++)if(bins[k]>m)m=bins[k];
+              v=m/255;
+            }else v=.12+Math.abs(Math.sin(performance.now()/260+i*.5))*.12;
+            const h=Math.max(2,v*H*.82);
+            const g=vc.createLinearGradient(0,H,0,H-h);
+            g.addColorStop(0,`hsl(${hue} 90% 60% / .28)`);
+            g.addColorStop(1,`hsl(${(hue+40)%360} 95% 66% / .95)`);
+            vc.fillStyle=g;
+            vc.fillRect(i*(bw+gap),H-h,bw,h);
+          }
+          /* progress hairline */
+          if(d>0){
+            vc.fillStyle=`hsl(${hue} 95% 70% / .85)`;
+            vc.fillRect(0,H-2,W*p,2);
+          }
+          step();
+        };
+        st.raf=requestAnimationFrame(frame);
+      }
+      function stopViz(){
+        if(st.raf)cancelAnimationFrame(st.raf);
+        st.raf=0;
+        idleT=0;
+      }
+
+      /* ---------- events ---------- */
+      w.body.addEventListener('click',e=>{
+        const b=e.target.closest('[data-a]');if(!b)return;
+        const a=b.dataset.a;
+        if(a==='play'){
+          if(st.idx<0){toast('Pick a track first');return}
+          if(isSynth(st.el))Synth.toggle();
+          else if(st.el)st.el.paused?play():st.el.pause();
+          Audio2.init();
+        }
+        else if(a==='prev'){if(st.idx>0)load(st.idx-1);else seekTo(0)}
+        else if(a==='next')advance();
+        else if(a==='mute'){
+          audio.muted=!audio.muted;
+          w.body.querySelector('[data-a="mute"]').innerHTML=audio.muted?ICONS.mute:ICONS.vol;
+          Audio2.init();
+        }
+        else if(a==='shuffle'){
+          st.shuffle=!st.shuffle;
+          b.dataset.on=st.shuffle?'1':'0';
+          b.classList.toggle('on',st.shuffle);
+          toast(st.shuffle?'Shuffle on':'Shuffle off');
+        }
+        else if(a==='repeat'){
+          st.repeat=!st.repeat;
+          b.dataset.on=st.repeat?'1':'0';
+          b.classList.toggle('on',st.repeat);
+          toast(st.repeat?'Repeat on':'Repeat off');
+        }
+        else if(a==='openfile'){
+          const inp=el('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
+          inp.onchange=()=>{
+            [...inp.files].forEach(f=>addItem({
+              name:f.name,kind:'file',size:f.size,url:URL.createObjectURL(f),objUrl:true
+            }));
+            if(st.idx<0)load(0);
+            toast('Added '+inp.files.length+' file'+(inp.files.length>1?'s':''));
+          };
+          inp.click();
+        }
+      });
+      volInp.oninput=()=>{audio.volume=+volInp.value/100;audio.muted=+volInp.value===0};
+      const seekTo=e=>{
+        const r=seek.getBoundingClientRect();
+        const p=clamp((e.clientX-r.left)/r.width,0,1);
+        const d=curDur();
+        if(d)seek._to=p*d;
+      };
+      seek.onpointerdown=e=>{
+        seek.setPointerCapture(e.pointerId);seekTo(e);seek._d=true;
+        if(seek._to!=null){
+          if(isSynth(st.el))Synth.seek(seek._to);
+          else if(st.el)st.el.currentTime=seek._to;
+          seek._to=null;step();
+        }
+      };
+      seek.onpointermove=e=>{if(seek._d)seekTo(e)};
+      seek.onpointerup=()=>{seek._d=false;seek._to=null};
+
+      /* The synthesiser runs on its own timer, so the UI has to be repainted
+         from somewhere; 100 ms is smooth enough for a progress bar. */
+      const uiTimer=setInterval(()=>{
+        if(st.idx<0)return;
+        const on=isSynth(st.el)?Synth.playing:!!(st.el&&!st.el.paused);
+        if(on){step();if(!st.raf)drawViz()}
+        else{syncPlay();stopViz()}
+      },100);
+
+      /* seed the library */
+      TRACKS.forEach(song=>addItem({name:song.title,kind:'synth',song}));
+      renderList();
+      if(opts.track)load(opts.track);
+
+      return {destroy:()=>{
+        clearInterval(uiTimer);
+        stopViz();
+        Synth.stop();
+        audio.pause();
+        st.list.forEach(i=>{if(i.objUrl)URL.revokeObjectURL(i.objUrl)});
+      }};
+    }
+  };
+}
+
+  try {
+    __exports = register(KERNEL_CTX);
+  } finally {
+    KERNEL_CTX.__deps = [];
+  }
+  KERNEL_CTX.registry["music"] = __exports || {};
+})();
+
+
+/* MODULE: reel  dir: src/packages/reel */
+(function () {
+  'use strict';
+  KERNEL_CTX.__deps = [];
+  var __exports = {};
+
+
+/* ==================================================================
+   ENTRY
+   src/packages/reel/entry.js
+   ================================================================== */
+
+/* ============================================================
+   GENERATED DEMO REEL - a package
+   ------------------------------------------------------------
+   It is a package and not an app because apps/video renders it and
+   reaches it with ctx.use('reel'), while nothing else does. Subs is
+   still a kernel name and is read from ctx.core.
+   ============================================================ */
+function register(ctx) {
+  const { Subs, clamp, fmtDur } = ctx.core;
+
+  const Reel={
+    /* deterministic noise in [-1,1] */
+    hash(n){
+      let x=(n|0)*374761393+668265263;
+      x=(x^(x>>13))*1274126177;
+      return ((x^(x>>16))>>>0)/4294967295;
+    },
+    hue:188,
+    chapters:[
+      {t:0,   name:'Orbital',    dur:24},
+      {t:24,  name:'City Grid',  dur:24},
+      {t:48,  name:'Data Stream',dur:24},
+      {t:72,  name:'Spectrum',   dur:24},
+      {t:96,  name:'Signal Lost',dur:22}
+    ],
+    duration:118,
+
+    chapterAt(t){
+      for(let i=this.chapters.length-1;i>=0;i--)if(t>=this.chapters[i].t)return i;
+      return 0;
+    },
+    progress(t){return clamp(t/this.duration,0,1)},
+
+    subtitles(){
+      return Subs.parse([
+        '1',
+        '00:00:01,000 --> 00:00:07,000',
+        'NEXUS VISUAL SYSTEMS',
+        'reference reel — sequence one',
+        '',
+        '2',
+        '00:00:09,000 --> 00:00:15,000',
+        'Every frame in this reel is generated',
+        'at run time. No video file is loaded.',
+        '',
+        '3',
+        '00:00:17,000 --> 00:00:23,500',
+        'The renderer is a pure function of time,',
+        'so the scrubber lands on the same frame.',
+        '',
+        '4',
+        '00:00:26,000 --> 00:00:33,000',
+        'ORBITAL',
+        'terminator sweep at 04:12 sunrise',
+        '',
+        '5',
+        '00:00:36,000 --> 00:00:44,000',
+        'Light wraps the limb. The city below',
+        'has already switched to night.',
+        '',
+        '6',
+        '00:00:50,000 --> 00:00:58,000',
+        'CITY GRID',
+        'four parallax planes, seeded by index',
+        '',
+        '7',
+        '00:01:01,000 --> 00:01:09,000',
+        'Every window is lit by a hash of its own',
+        'address, so it never flickers on re-render.',
+        '',
+        '8',
+        '00:01:14,000 --> 00:01:22,000',
+        'DATA STREAM',
+        'tunnel depth 96 units',
+        '',
+        '9',
+        '00:01:25,000 --> 00:01:32,000',
+        'The rain is a rolling buffer of digits',
+        'sampled from the same hash.',
+        '',
+        '10',
+        '00:01:38,000 --> 00:01:46,000',
+        'SPECTRUM',
+        'this chapter follows live audio if any is playing',
+        '',
+        '11',
+        '00:01:49,000 --> 00:01:56,000',
+        'Otherwise it falls back to a fixed waveform,',
+        'which keeps seeking deterministic.',
+        '',
+        '12',
+        '00:02:00,000 --> 00:02:07,000',
+        'SIGNAL LOST',
+        'carrier degrading',
+        '',
+        '13',
+        '00:02:10,000 --> 00:02:16,500',
+        'End of reel.',
+        'Press R to restart, F for full screen.'
+      ].join('\n'));
+    },
+
+    /* ---------- helpers ---------- */
+    sky(g,W,H,top,bot){
+      const gr=g.createLinearGradient(0,0,0,H);
+      gr.addColorStop(0,top);gr.addColorStop(1,bot);
+      g.fillStyle=gr;g.fillRect(0,0,W,H);
+    },
+    vignette(g,W,H,amount){
+      const gr=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.72);
+      gr.addColorStop(0,'rgba(0,0,0,0)');
+      gr.addColorStop(1,`rgba(0,0,0,${amount==null?.55:amount})`);
+      g.fillStyle=gr;g.fillRect(0,0,W,H);
+    },
+    scanlines(g,W,H,gap,alpha){
+      g.fillStyle=`rgba(0,0,0,${alpha})`;
+      for(let y=0;y<H;y+=gap)g.fillRect(0,y,W,1);
+    },
+    caption(g,W,H,text,sub){
+      g.font='600 13px ui-monospace,Consolas,monospace';
+      g.textAlign='left';
+      g.fillStyle='rgba(255,255,255,.55)';
+      g.fillText(text,26,H-46);
+      if(sub){
+        g.font='11px ui-monospace,Consolas,monospace';
+        g.fillStyle='rgba(255,255,255,.32)';
+        g.fillText(sub,26,H-28);
+      }
+    },
+    timecode(g,W,H,t,rate,idx){
+      g.font='11px ui-monospace,Consolas,monospace';
+      g.textAlign='right';
+      g.fillStyle='rgba(255,255,255,.45)';
+      g.fillText(`TC ${fmtDur(t)}   ${rate}x   SC ${String(idx+1).padStart(2,'0')}/05`,W-26,H-28);
+      g.textAlign='left';
+    },
+
+    /* ---------- scenes ---------- */
+    orbital(g,W,H,t){
+      this.sky(g,W,H,'#050818','#0d1030');
+      const cx=W*.5,cy=H*1.5,R=Math.min(W,H)*1.05;
+      /* stars, fixed by index */
+      for(let i=0;i<170;i++){
+        const x=this.hash(i*3+1)*W, y=this.hash(i*3+2)*H*.92;
+        const tw=.5+.5*Math.sin(t*2+i);
+        g.fillStyle=`rgba(255,255,255,${.15+this.hash(i*3+3)*.5*tw})`;
+        g.fillRect(x,y,1.6,1.6);
+      }
+      /* the limb, with the terminator sweeping across */
+      g.save();
+      g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.clip();
+      const lit=g.createLinearGradient(cx-R,cy-R,cx+R*.2,cy);
+      const sweep=(t/24)*.8;
+      lit.addColorStop(0,'#0a1c3a');
+      lit.addColorStop(clamp(sweep,0.02,.96),'#2f6fb5');
+      lit.addColorStop(clamp(sweep+.06,.05,.99),'#ffd9a0');
+      lit.addColorStop(1,'#02040c');
+      g.fillStyle=lit;g.fillRect(0,0,W,H);
+      /* city lights on the night side */
+      for(let i=0;i<70;i++){
+        const a=this.hash(i*5+11)*Math.PI*2, d=R*.82;
+        const x=cx+Math.cos(a)*d, y=cy+Math.sin(a)*d;
+        if(y<cy-R*.82)continue;
+        g.fillStyle=`rgba(255,200,120,${.2+this.hash(i*5+12)*.6})`;
+        g.fillRect(x,y,1.5,1.5);
+      }
+      g.restore();
+      g.strokeStyle='rgba(120,200,255,.5)';g.lineWidth=1.5;
+      g.beginPath();g.arc(cx,cy,R,Math.PI*1.05,Math.PI*1.95);g.stroke();
+      g.strokeStyle='rgba(120,200,255,.14)';
+      for(let i=1;i<4;i++){g.beginPath();g.arc(cx,cy,R*(1-i*.005),Math.PI*1.05,Math.PI*1.95);g.stroke()}
+      this.caption(g,W,H,'ORBITAL','terminator sweep');
+    },
+    cityGrid(g,W,H,t){
+      const hor=H*.56;
+      const sun=g.createLinearGradient(0,hor-H*.3,0,hor);
+      sun.addColorStop(0,'#ff2e63');sun.addColorStop(.55,'#b06bff');sun.addColorStop(1,'#ffc857');
+      g.fillStyle='#0a0418';g.fillRect(0,0,W,hor);
+      g.fillStyle=sun;
+      g.beginPath();g.arc(W*.5,hor-14,Math.min(W,H)*.16,Math.PI,0);g.fill();
+      /* sun bands */
+      g.fillStyle='#0a0418';
+      for(let i=0;i<7;i++){
+        const y=hor-6-i*Math.min(W,H)*.022;
+        g.fillRect(W*.5-Math.min(W,H)*.17,y,Math.min(W,H)*.34,2+i*1.5);
+      }
+      /* four parallax skyline planes, each seeded by index and offset by t */
+      for(let p=3;p>=0;p--){
+        const par=0.06+p*.10, w=Math.max(18,W*.055-p*7);
+        const base=this.hash(p*17+3)*W;
+        g.fillStyle=`rgba(${8+p*4},${6+p*6},${20+p*10},1)`;
+        const off=((t*par*40)%W);
+        for(let k=-1;k<Math.ceil(W/w)+1;k++){
+          const bi=Math.floor(base/w)+k;
+          const bh=H*(.10+this.hash(bi*7+p*31)*.26);
+          const x=k*w-off%w;
+          g.fillRect(x,hor-bh,w*.86,bh);
+          if(p>=2){
+            g.fillStyle=`rgba(255,${180+p*20},${90+p*40},${.10+p*.12})`;
+            const rows=Math.floor(bh/13);
+            for(let r=0;r<rows;r++)for(let cI=0;cI<Math.floor(w/9);cI++){
+              if(this.hash(bi*997+r*31+cI*7+p)<.42)continue;
+              g.fillRect(x+3+cI*9,hor-bh+5+r*13,3,4);
+            }
+            g.fillStyle=`rgba(${8+p*4},${6+p*6},${20+p*10},1)`;
+          }
+        }
+      }
+      /* perspective floor */
+      g.fillStyle='#07030f';g.fillRect(0,hor,W,H-hor);
+      g.strokeStyle='rgba(176,107,255,.55)';g.lineWidth=1;
+      for(let i=0;i<18;i++){
+        const y=hor+Math.pow(i/18,2.1)*(H-hor);
+        g.globalAlpha=1-i/20;
+        g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();
+      }
+      g.globalAlpha=1;
+      for(let i=-8;i<=8;i++){
+        g.beginPath();g.moveTo(W/2+i*6,hor);g.lineTo(W/2+i*W*.16,H);g.stroke();
+      }
+      this.caption(g,W,H,'CITY GRID','four parallax planes');
+    },
+    dataStream(g,W,H,t){
+      g.fillStyle='#000308';g.fillRect(0,0,W,H);
+      /* wireframe tunnel, 96 units of depth */
+      const cx=W/2,cy=H/2,R=Math.min(W,H)*.46;
+      g.strokeStyle='rgba(55,224,255,.5)';g.lineWidth=1;
+      for(let i=0;i<26;i++){
+        const d=((i/26)+((t*.22)%(1/26)))%1;
+        const k=Math.pow(1-d,3);
+        const r=R*k;
+        g.globalAlpha=k*.9;
+        const sides=8, rot=t*.35+i*.2;
+        g.beginPath();
+        for(let s=0;s<=sides;s++){
+          const a=rot+s/sides*Math.PI*2;
+          const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+          s?g.lineTo(x,y):g.moveTo(x,y);
+        }
+        g.closePath();g.stroke();
+      }
+      g.globalAlpha=1;
+      /* number rain — column x and row y are hashed, the offset scrolls */
+      g.font='13px ui-monospace,Consolas,monospace';
+      const cols=Math.floor(W/16);
+      for(let c=0;c<cols;c++){
+        const h1=this.hash(c*13+5);
+        const speed=40+h1*90;
+        const head=(t*speed+h1*3000)%(H+40);
+        for(let r=0;r<14;r++){
+          const y=H-((head+r*20)%(H+40));        const a=(1-r/14)*.85;
+          const d=this.hash(c*211+r*17+((Math.floor(t*2)+r)%7));
+          g.fillStyle=`rgba(90,${200+d*55},${150+d*80},${a})`;
+          g.fillText('0123456789ABCDEF'[(d*16)|0],c*16+6,y);
+        }
+      }
+      this.caption(g,W,H,'DATA STREAM','tunnel depth 26 rings');
+    },
+    spectrum(g,W,H,t,ana){
+      g.fillStyle='#04060f';g.fillRect(0,0,W,H);
+      const bins=new Uint8Array(128);
+      let live=false;
+      if(ana&&ana.getByteFrequencyData){ana.getByteFrequencyData(bins);live=true}
+      const N=64,hor=H*.82;
+      /* horizon glow */
+      const gl=g.createLinearGradient(0,hor-H*.2,0,hor+10);
+      gl.addColorStop(0,'rgba(55,224,255,0)');gl.addColorStop(1,'rgba(55,224,255,.22)');
+      g.fillStyle=gl;g.fillRect(0,hor-H*.2,W,H*.2+10);
+      for(let i=0;i<N;i++){
+        let v;
+        if(live)v=bins[1+Math.floor(Math.pow(i/N,1.7)*110)]/255;
+        else v=.30+.30*Math.abs(Math.sin(t*1.7+i*.42))+.12*Math.sin(t*5+i);
+        v=clamp(v,0,1);
+        const bw=W/N;
+        const bh=v*(hor-H*.22);
+        const gr=g.createLinearGradient(0,hor,0,hor-bh);
+        gr.addColorStop(0,'rgba(61,220,132,.25)');
+        gr.addColorStop(1,'rgba(255,200,87,.95)');
+        g.fillStyle=gr;
+        g.fillRect(i*bw+1,hor-bh,bw-2,bh);
+      }
+      g.strokeStyle='rgba(61,220,132,.7)';g.lineWidth=1.5;
+      g.beginPath();g.moveTo(0,hor);g.lineTo(W,hor);g.stroke();
+      /* reflection */
+      g.globalAlpha=.16;
+      for(let i=0;i<N;i++){
+        const bw=W/N;
+        const v=live?bins[1+Math.floor(Math.pow(i/N,1.7)*110)]/255
+                    :.30+.30*Math.abs(Math.sin(t*1.7+i*.42))+.12*Math.sin(t*5+i);
+        g.fillStyle='rgba(255,200,87,1)';
+        g.fillRect(i*bw+1,hor,bw-2,v*40);
+      }
+      g.globalAlpha=1;
+      this.caption(g,W,H,'SPECTRUM',live?'following live audio':'fixed waveform');
+    },
+    signalLost(g,W,H,t){
+      const k=(t-96)/22;
+      this.sky(g,W,H,'#120206','#000000');
+      /* rolling horizontal tear bands */
+      for(let i=0;i<9;i++){
+        const y=this.hash(i*41)*H;
+        const h=2+this.hash(i*41+1)*10*(.4+k);
+        const off=this.hash(i*41+2)*W;
+        g.fillStyle=`rgba(${40+i*8},${10+i*4},${30+i*10},${.10+k*.12})`;
+        g.fillRect((off+t*40*(i+1))%W-40,y,60,h);
+      }
+      /* static blocks grow with the degradation */
+      const blocks=Math.floor(k*k*260);
+      for(let i=0;i<blocks;i++){
+        const x=this.hash(i*97+1)*W, y=this.hash(i*97+2)*H;
+        const w=2+this.hash(i*97+3)*46, h=2+this.hash(i*97+4)*9;
+        g.fillStyle=`rgba(${180*this.hash(i*97+5)},${200},${255},${.04+this.hash(i*97+6)*.16})`;
+        g.fillRect(x,y,w,h);
+      }
+      /* the logo resolving out of the noise */
+      const a=clamp((k-.45)*2.6,0,1);
+      g.textAlign='center';
+      g.font='700 '+Math.round(Math.min(W*.09,64))+'px ui-monospace,Consolas,monospace';
+      g.fillStyle=`rgba(55,224,255,${a*(.7+.3*Math.sin(t*9))})`;
+      g.fillText('NEXUS',W/2,H*.44);
+      g.font='12px ui-monospace,Consolas,monospace';
+      g.fillStyle=`rgba(176,107,255,${a})`;
+      g.fillText('END OF SEQUENCE',W/2,H*.44+30);
+      g.textAlign='left';
+      this.scanlines(g,W,H,3,.10+k*.28);
+      this.vignette(g,W,H,.45+k*.35);
+      this.caption(g,W,H,'SIGNAL LOST','carrier degrading');
+    },
+
+    /* ---------- entry point ---------- */
+    render(g,W,H,t,rate,ana){
+      const idx=this.chapterAt(t);
+      const ch=this.chapters[idx];
+      const local=Math.max(0,t-ch.t);
+      g.save();
+      /* Reel is authored 16:9; letterbox into whatever the stage is so the
+         player is not forced to distort it. */
+      const target=W/H, src=16/9;
+      let dw=W,dh=H,dx=0,dy=0;
+      if(target>src){dh=H;dw=H*src;dx=(W-dw)/2}
+      else{dw=W;dh=W/src;dy=(H-dh)/2}
+      g.translate(dx,dy);
+      g.beginPath();g.rect(0,0,dw,dh);g.clip();
+      if(idx===0)this.orbital(g,dw,dh,local);
+      else if(idx===1)this.cityGrid(g,dw,dh,local);
+      else if(idx===2)this.dataStream(g,dw,dh,local);
+      else if(idx===3)this.spectrum(g,dw,dh,local,ana);
+      else this.signalLost(g,dw,dh,local);
+      g.restore();
+      /* bars are outside the clip so the frame reads as letterboxed footage */
+      if(dy>0){g.fillStyle='#000';g.fillRect(0,0,W,dy);g.fillRect(0,H-dy,W,dy)}
+      if(dx>0){g.fillStyle='#000';g.fillRect(0,0,dx,H);g.fillRect(W-dx,0,dx,H)}
+      this.timecode(g,W,H,t,rate,idx);
+      this.vignette(g,W,H,.35);
+    }
+  };
+  return { Reel };
+}
+
+  try {
+    __exports = register(KERNEL_CTX);
+  } finally {
+    KERNEL_CTX.__deps = [];
+  }
+  KERNEL_CTX.registry["reel"] = __exports || {};
+})();
+
+
+/* MODULE: video  dir: src/apps/video */
+(function () {
+  'use strict';
+  KERNEL_CTX.__deps = ["reel"];
+  var __exports = {};
+
+
+/* ==================================================================
+   ENTRY
+   src/apps/video/entry.js
+   ================================================================== */
+
+/* ============================================================
+   VIDEO PLAYER
+   ------------------------------------------------------------
+   An APP module. Reel arrives through ctx.use('reel') because reel is
+   already a package; Subs is still a kernel name, so it comes off
+   ctx.core. That asymmetry is temporary - see task 5b.
+   ============================================================ */
+function register(ctx) {
+  const { Reel } = ctx.use('reel');
+  const { Achievements, APPS, Audio2, ICONS, LS, Subs, VFS,
+    clamp, el, fmtDur, toast } = ctx.core;
+
+  APPS.video={
+    title:'Video',icon:ICONS.vid,desc:'ReelPlayer',w:980,h:620,
+    build(w,opts){
+      w.body.innerHTML=`<div class="vd">
+        <div class="vdStage" data-stage>
+          <video data-el playsinline style="display:none"></video>
+          <canvas data-canvas style="display:none"></canvas>
+          <div class="vdSubs" data-subs style="display:none"></div>
+          <div class="vdEmpty" data-empty>
+            <div style="width:56px;height:56px;opacity:.5">${ICONS.vid}</div>
+            <b>Nothing loaded</b>
+            <span>Play the generated reel, or open a video file from your computer.</span>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn pri" data-a="reel">${ICONS.play} Play demo reel</button>
+              <button class="btn" data-a="openfile">${ICONS.open} Open file…</button>
+            </div>
+          </div>
+          <div class="vdBadge" data-badge></div>
+          <div class="vdBig" data-bigplay>${ICONS.play}</div>
+        </div>
+        <div class="vdBar">
+          <button class="mbtn" data-a="prev" title="Previous">${ICONS.prev}</button>
+          <button class="mbtn play" data-a="play" title="Play / pause (space)">${ICONS.play}</button>
+          <button class="mbtn" data-a="next" title="Next">${ICONS.next}</button>
+          <span class="vdTime" data-time>0:00 / 0:00</span>
+          <div class="mdSeek vdSeek" data-seek><i style="width:0"></i><b style="left:0"></b><u data-chaps></u></div>
+          <span class="vdRate" data-rateBtn title="Playback speed">1.0x</span>
+          <button class="mbtn" data-a="cc" title="Subtitles (C)">CC</button>
+          <button class="mbtn" data-a="pip" title="Picture in picture (P)">${ICONS.pip}</button>
+          <button class="mbtn" data-a="full" title="Full screen (F)">${ICONS.full}</button>
+          <button class="mbtn" data-a="mute" title="Mute (M)" style="width:34px;height:34px">${ICONS.vol}</button>
+          <input type="range" min="0" max="100" value="80" data-vol style="width:72px;accent-color:var(--accent)" title="Volume">
+        </div>
+        <div class="toolbar" style="border-radius:11px">
+          <button class="btn" data-a="reel">${ICONS.vid} Demo reel</button>
+          <button class="btn" data-a="openfile">${ICONS.open} Open video…</button>
+          <button class="btn" data-a="srt">Load subtitles…</button>
+          <span class="sp"></span>
+          <span data-meta style="font-size:11px;color:#8ea0bd;font-family:var(--mono)"></span>
+        </div>
+        <div class="vdRecent" data-recent></div>
+      </div>`;
+      const stage=w.body.querySelector('[data-stage]'),
+        video=w.body.querySelector('[data-el]'),
+        canvas=w.body.querySelector('[data-canvas]'),
+        subsEl=w.body.querySelector('[data-subs]'),
+        emptyEl=w.body.querySelector('[data-empty]'),
+        badgeEl=w.body.querySelector('[data-badge]'),
+        bigEl=w.body.querySelector('[data-bigplay]'),
+        seek=w.body.querySelector('[data-seek]'),
+        chapsEl=w.body.querySelector('[data-chaps]'),
+        timeEl=w.body.querySelector('[data-time]'),
+        rateEl=w.body.querySelector('[data-rateBtn]'),
+        metaEl=w.body.querySelector('[data-meta]'),
+        recentEl=w.body.querySelector('[data-recent]'),
+        volInp=w.body.querySelector('[data-vol]'),
+        playBtn=w.body.querySelector('[data-a="play"]');
+      const vc=canvas.getContext('2d');
+      const st={src:null,kind:null,raf:0,last:0,time:0,rate:1,playing:false,
+        cues:null,ccOn:true,recentAuto:true,recent:LS.get('videoRecent',[])};
+      const RATES=[0.25,0.5,0.75,1,1.25,1.5,2,4];
+
+      /* ---------- source layer ---------- */
+      const isReel=()=>st.kind==='reel';
+      const now=()=>isReel()?st.time:(isFinite(video.currentTime)?video.currentTime:0);
+      const duration=()=>isReel()?Reel.duration:(isFinite(video.duration)?video.duration:0);
+      const setNow=t=>{
+        if(isReel())st.time=clamp(t,0,Reel.duration);
+        else if(isFinite(video.duration))video.currentTime=clamp(t,0,video.duration);
+        step();
+      };
+      const setRate=r=>{
+        st.rate=r;
+        if(!isReel())video.playbackRate=r;
+        /* toFixed then trim: (1).toFixed(2) is "1.00", and a fixed 2 decimals
+           reads as a setting rather than a speed control. */
+        rateEl.textContent=(Math.round(r*100)/100)+'x';
+        rateEl.classList.toggle('on',r!==1);
+        rateEl.dataset.rate=String(r);
+      };
+
+      /* ---------- rendering ---------- */
+      function sizeCanvas(){
+        const r=stage.getBoundingClientRect();
+        const d=Math.min(devicePixelRatio||1,2);
+        const w=Math.round(r.width*d),h=Math.round(r.height*d);
+        if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+        vc.setTransform(d,0,0,d,0,0);
+        return r;
+      }
+      function frame(ts){
+        if(!st.playing)return;
+        st.raf=requestAnimationFrame(frame);
+        /* clamp both ends: a huge dt after a tab is backgrounded would skip the
+           reel forward by however long the user was away */
+        const dt=clamp((ts-st.last)/1000,0,.05);
+        st.last=ts;
+        if(isReel()){
+          st.time+=dt*st.rate;
+          if(st.time>=Reel.duration){st.time=Reel.duration;pause();onEnd();return}
+          const r=sizeCanvas();
+          Reel.render(vc,r.width,r.height,st.time,st.rate,Audio2.analyser());
+          paintSubs();
+          paintBadge();
+          step();
+        }
+      }
+      function onEnd(){
+        if(isReel()){
+          if(!watched){watched=true;Achievements.grant('DIRECTOR')}
+          setNow(0);
+          play();
+          return;
+        }
+        if(st.recentAuto)loadRecent(0);
+      }
+      function paintSubs(){
+        if(!st.ccOn||!st.cues){subsEl.style.display='none';subsEl.textContent='';return}
+        const cue=Subs.active(st.cues,now());
+        if(!cue){subsEl.style.display='none';subsEl.textContent='';return}
+        subsEl.style.display='';
+        /* keep the same element and only touch textContent when it changes,
+           otherwise the browser re-lays out the caption every frame */
+        if(subsEl.textContent!==cue.text)subsEl.textContent=cue.text;
+      }
+      function paintBadge(){
+        if(!isReel()){badgeEl.textContent='';return}
+        const i=Reel.chapterAt(st.time);
+        const ch=Reel.chapters[i];
+        const local=st.time-ch.t;
+        badgeEl.textContent=`CHAPTER ${i+1}/5 · ${ch.name.toUpperCase()} · ${fmtDur(local)}`;
+      }
+      function step(){
+        const d=duration(),t=now();
+        seek.querySelector('i').style.width=(d?t/d*100:0)+'%';
+        seek.querySelector('b').style.left=(d?t/d*100:0)+'%';
+        timeEl.textContent=fmtDur(t)+' / '+fmtDur(d);
+        if(!isReel())paintSubs();
+      }
+
+      /* ---------- transport ---------- */
+      function loadReel(){
+        unload();
+        st.kind='reel';st.src={name:'NEXUS Visual Systems — Reference Reel',reel:true};
+        st.cues=Reel.subtitles();
+        st.time=0;st.rate=1;
+        watched=false;
+        video.style.display='none';
+        canvas.style.display='';
+        emptyEl.style.display='none';
+        rateEl.textContent='1x';rateEl.classList.remove('on');rateEl.dataset.rate='1';
+        metaEl.textContent='generated at run time · no video file';
+        w.el.querySelector('.ttl').textContent='Reference Reel — Video';
+        drawChapters();
+        play();
+      }
+      function loadFile(name,url,objUrl,fromVfs){
+        unload();
+        st.kind='file';st.src={name,url,objUrl:!!objUrl,fromVfs:!!fromVfs};
+        st.cues=null;st.rate=1;
+        canvas.style.display='none';
+        video.style.display='';
+        emptyEl.style.display='none';
+        video.src=url;
+        video.volume=+volInp.value/100;
+        video.playbackRate=1;
+        rateEl.textContent='1x';rateEl.classList.remove('on');rateEl.dataset.rate='1';
+        metaEl.textContent=fromVfs?'virtual filesystem':'local file';
+        w.el.querySelector('.ttl').textContent=name+' — Video';
+        drawChapters();
+        if(fromVfs)autoSubtitles(url);
+        video.play().catch(()=>{syncPlay();bigEl.style.display=''});
+        remember(name);
+      }
+      function unload(){
+        if(st.playing)pause();
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        st.kind=null;st.src=null;st.cues=null;st.time=0;
+      }
+      function play(){
+        if(!st.kind)return;
+        Audio2.init();Audio2.resume();
+        st.playing=true;
+        if(isReel()){
+          st.last=performance.now();
+          cancelAnimationFrame(st.raf);
+          st.raf=requestAnimationFrame(frame);
+        }else{
+          video.play().catch(()=>{st.playing=false;syncPlay()});
+        }
+        bigEl.style.display='none';
+        syncPlay();
+      }
+      function pause(){
+        st.playing=false;
+        cancelAnimationFrame(st.raf);st.raf=0;
+        if(!isReel())video.pause();
+        syncPlay();
+      }
+      function syncPlay(){
+        playBtn.innerHTML=st.playing?ICONS.pause:ICONS.play;
+        bigEl.style.display=st.playing?'none':'';
+      }
+      function toggle(){st.playing?pause():play()}
+      function drawChapters(){
+        chapsEl.innerHTML='';
+        if(!isReel())return;
+        Reel.chapters.forEach(c=>{
+          const u=el('u','',chapsEl);
+          u.style.left=(c.t/Reel.duration*100)+'%';
+          u.title=c.name;
+          u.dataset.t=c.t;
+        });
+      }
+      function remember(name){
+        st.recent=[name,...st.recent.filter(n=>n!==name)].slice(0,6);
+        LS.set('videoRecent',st.recent);
+        renderRecent();
+      }
+      /* Reopen a recent file by looking its name back up in the filesystem. */
+      function loadRecent(i){
+        const n=st.recent[i];
+        const hit=n&&VFS.search(n)[0];
+        const node=hit&&hit.node;
+        const url=node&&(node.dataUrl||node.blobUrl);
+        if(url)loadFile(node.name,url,false,true);
+      }
+      let watched=false;
+      function renderRecent(){
+        if(!st.recent.length){recentEl.innerHTML='';return}
+        recentEl.innerHTML='<span style="font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8ea0bd">Recent</span>';
+        st.recent.forEach(n=>{
+          const b=el('button','vdChip',recentEl);
+          b.textContent=n;
+          b.onclick=()=>{
+            /* The chip holds a display name, not a path. Look it back up rather
+               than trusting the label, and do not assume the file is still
+               there — the filesystem can be reset underneath us. */
+            const hit=VFS.search(n)[0];
+            const node=hit&&hit.node;
+            const url=node&&(node.dataUrl||node.blobUrl);
+            if(url)loadFile(node.name,url,false,true);
+            else toast('That file is no longer in the filesystem');
+          };
+        });
+      }
+      /* If a file with the same base name and a .srt extension exists, use it
+         without asking — subtitles that "just work" are the expected default. */
+      function autoSubtitles(url){
+        if(!url||url.startsWith('blob:'))return;
+        const base=url.replace(/\.[^./]+$/,'');
+        const hit=VFS.search(base+'.srt')[0];
+        const node=hit&&hit.node;
+        if(node&&node.text!=null){
+          st.cues=Subs.parse(node.text);
+          if(st.cues.length)metaEl.textContent='virtual filesystem · subtitles loaded';
+        }
+      }
+
+      /* ---------- input ---------- */
+      w.body.addEventListener('click',e=>{
+        const b=e.target.closest('[data-a]');
+        if(b){
+          const a=b.dataset.a;
+          if(a==='play')toggle();
+          else if(a==='next'||a==='prev'){/* single source; rewind instead of change */setNow(0)}
+          else if(a==='reel')loadReel();
+          else if(a==='cc'){
+            st.ccOn=!st.ccOn;
+            b.classList.toggle('on',st.ccOn);
+            paintSubs();
+            toast(st.ccOn?'Subtitles on':'Subtitles off');
+          }
+          else if(a==='full')toggleFullscreen();
+          else if(a==='pip')togglePip();
+          else if(a==='mute'){
+            video.muted=!video.muted;
+            w.body.querySelector('[data-a="mute"]').innerHTML=video.muted?ICONS.mute:ICONS.vol;
+            Audio2.init();
+          }
+          else if(a==='openfile'){
+            const inp=el('input');inp.type='file';inp.accept='video/*';inp.multiple=false;
+            inp.onchange=()=>{
+              const f=inp.files[0];
+              if(f)loadFile(f.name,URL.createObjectURL(f),true,false);
+            };
+            inp.click();
+          }
+          else if(a==='srt')loadSrt();
+          return;
+        }
+        if(e.target.closest('[data-rateBtn]')){
+          const i=RATES.indexOf(st.rate);
+          setRate(RATES[(i+1)%RATES.length]);
+          return;
+        }
+        /* clicking the picture toggles playback, the way every player does */
+        if(e.target===stage||e.target===video||e.target===canvas){
+          if(st.kind)toggle();
+          else bigEl.click();
+        }
+      });
+      volInp.oninput=()=>{
+        video.volume=+volInp.value/100;
+        video.muted=+volInp.value===0;
+        w.body.querySelector('[data-a="mute"]').innerHTML=video.muted?ICONS.mute:ICONS.vol;
+      };
+      function loadSrt(){
+        const inp=el('input');inp.type='file';inp.accept='.srt,text/plain';
+        inp.onchange=()=>{
+          const f=inp.files[0];
+          if(!f)return;
+          const r=new FileReader();
+          r.onload=()=>{
+            st.cues=Subs.parse(r.result);
+            st.ccOn=true;
+            w.body.querySelector('[data-a="cc"]').classList.add('on');
+            paintSubs();
+            toast(st.cues.length?st.cues.length+' subtitle cues loaded':'No cues found in that file');
+          };
+          r.readAsText(f);
+        };
+        inp.click();
+      }
+      const seekTo=e=>{
+        const r=seek.getBoundingClientRect();
+        setNow(clamp((e.clientX-r.left)/r.width,0,1)*duration());
+      };
+      seek.onpointerdown=e=>{
+        seek.setPointerCapture(e.pointerId);seekTo(e);seek._d=true;
+      };
+      seek.onpointermove=e=>{if(seek._d)seekTo(e)};
+      seek.onpointerup=()=>{seek._d=false};
+      /* clicking a chapter marker jumps straight to it */
+      chapsEl.onclick=e=>{
+        const u=e.target.closest('u');
+        if(u)setNow(+u.dataset.t);
+      };
+      function toggleFullscreen(){
+        if(document.fullscreenElement)document.exitFullscreen();
+        else if(stage.requestFullscreen)stage.requestFullscreen().catch(()=>toast('Full screen was refused'));
+        else toast('Full screen is not available here');
+      }
+      function togglePip(){
+        if(isReel()){toast('Picture-in-picture needs a real video file');return}
+        if(!video.requestPictureInPicture){toast('Picture-in-picture is not supported in this browser');return}
+        if(document.pictureInPictureElement)document.exitPictureInPicture();
+        else video.requestPictureInPicture().catch(()=>toast('Picture-in-picture was refused'));
+      }
+      /* chapter keys on a real file jump by 10% of its length */
+      w.el.addEventListener('keydown',e=>{
+        if(!st.kind)return;
+        if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;
+        const k=e.key.toLowerCase();
+        if(k===' '||e.code==='Space'){e.preventDefault();toggle()}
+        else if(k==='f'){e.preventDefault();toggleFullscreen()}
+        else if(k==='p'){e.preventDefault();togglePip()}
+        else if(k==='c'){e.preventDefault();w.body.querySelector('[data-a="cc"]').click()}
+        else if(k==='m'){e.preventDefault();w.body.querySelector('[data-a="mute"]').click()}
+        else if(k==='r'){e.preventDefault();setNow(0);play()}
+        else if(k==='arrowright'){e.preventDefault();setNow(now()+10)}
+        else if(k==='arrowleft'){e.preventDefault();setNow(now()-10)}
+        else if(k==='arrowup'){e.preventDefault();volInp.value=clamp(+volInp.value+5,0,100);volInp.oninput()}
+        else if(k==='arrowdown'){e.preventDefault();volInp.value=clamp(+volInp.value-5,0,100);volInp.oninput()}
+      });
+      video.addEventListener('play',()=>{if(!isReel()){st.playing=true;syncPlay();bigEl.style.display='none'}});
+      video.addEventListener('pause',()=>{if(!isReel()){st.playing=false;syncPlay()}});
+      video.addEventListener('ended',()=>{st.playing=false;syncPlay();onEnd()});
+      video.addEventListener('loadedmetadata',()=>{
+        if(isReel())return;
+        const d=isFinite(video.duration)?video.duration:0;
+        metaEl.textContent=`${video.videoWidth}×${video.videoHeight} · ${fmtDur(d)}`;
+        if(!st.playing)bigEl.style.display='';
+        step();
+      });
+      video.addEventListener('timeupdate',step);
+
+      renderRecent();
+      setRate(1);
+      syncPlay();
+      if(opts.path){
+        const n=VFS.node(opts.path);
+        if(n&&(n.dataUrl||n.blobUrl))loadFile(n.name,n.dataUrl||n.blobUrl,false,true);
+      }else if(opts.reel)loadReel();
+
+      return {destroy:()=>{unload();cancelAnimationFrame(st.raf)}};
+    }
+  };
+}
+
+  try {
+    __exports = register(KERNEL_CTX);
+  } finally {
+    KERNEL_CTX.__deps = [];
+  }
+  KERNEL_CTX.registry["video"] = __exports || {};
+})();
 
 </script>
 </body>

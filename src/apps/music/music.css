@@ -1,0 +1,53 @@
+/* ============================================================
+   MUSIC — the player layout and the now-playing overlay
+   ============================================================
+   Moved here from 09-paint-media.css and 14-music-video.css when the app
+   left the kernel. The two rules that describe the same box — the inherited
+   fixed-height slice and the override that gives it the leftover height —
+   travel together on purpose: an override separated from the declaration it
+   corrects is a rule with nothing to say, and .mdStage is the one place in
+   this stylesheet where the second rule must beat the first. */
+
+.md{display:flex;flex:1;min-height:0}
+.mdMain{flex:1;display:flex;flex-direction:column;min-width:0;padding:14px;gap:12px;background:rgba(0,0,0,.24)}
+/* The stage is a black box that fills the window and letterboxes its content.
+   This is the inherited rule: a fixed 34% slice, sized for the old
+   video-in-a-box media player. */
+.mdStage{flex:0 0 auto;height:34%;min-height:110px;border-radius:13px;background:#000;display:grid;place-items:center;overflow:hidden;position:relative}
+.mdStage video,.mdStage audio{width:100%;height:100%;object-fit:contain;background:#000}
+/* …and this is the override, immediately after it. The visualiser is the
+   point of this app, so the stage takes the leftover height instead and the
+   transport keeps its intrinsic size. It must load after the rule above. */
+.mdStage{flex:1 1 auto;height:auto;min-height:180px}
+#mdViz{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.85}
+.mdCtrl{flex:0 0 auto;display:flex;align-items:center;gap:11px}
+.mdTime{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:82px;text-align:right}
+.mdList{width:210px;flex:0 0 auto;border-left:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;background:rgba(0,0,0,.18)}
+.mdItem{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:11.5px;transition:.13s;cursor:default;width:100%;text-align:left}
+.mdItem:hover{background:rgba(255,255,255,.08)}
+.mdItem.on{background:linear-gradient(90deg,rgba(55,224,255,.24),transparent);box-shadow:inset 2px 0 0 var(--accent)}
+.mdItem .ic{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center;color:var(--accent)}
+.mdItem .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mdItem .x{opacity:.4}.mdItem .x:hover{opacity:1;color:var(--err)}
+
+/* ---------- now-playing panel over the visualiser ---------- */
+.muNow{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;text-align:center;padding:18px;
+  background:rgba(4,7,16,.55);backdrop-filter:blur(3px);pointer-events:none;
+  transition:opacity .3s;
+}
+.muNow.live{opacity:0}
+.muNow.live:hover{opacity:1}
+.muNow b{font-size:15px;letter-spacing:.01em}
+.muNow span{font-size:11px;color:var(--muted);max-width:340px;line-height:1.5}
+.muArt{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;
+  filter:blur(26px) saturate(1.5);opacity:.5;
+}
+.muNow.live .muArt{opacity:.28}
+#muViz{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* toolbar buttons latch visibly when a mode is on */
+.toolbar .btn[data-on="1"]{background:rgba(55,224,255,.2);color:var(--accent);border-color:rgba(55,224,255,.5)}
+.toolbar .btn[data-on="0"]{opacity:.6}
