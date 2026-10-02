@@ -346,37 +346,116 @@ git push origin main
 
 Two applications, chosen to be opposites: `calculator` is small with no dependencies; `music` is large and depends on two packages. If the contract is wrong, it is wrong in a way visible from both.
 
-### Task 5: `packages/synth`, `packages/songs`, `packages/subtitles`
+### Task 5: Move the consumers out of the kernel first
+
+**This task was rewritten after it failed. Do not skip to the package extraction.**
+
+The original Task 5 extracted `synth`, `songs` and `subtitles` into packages. It
+cannot land, for two reasons found by attempting it:
+
+**The dependency edge runs the other way.** `INSTRUMENTS` is *declared* in
+`29-songs.js:17` and *consumed* in `28-synth.js:161`. The plan and the spec both
+recorded it as `songs -> synth`; the source says `synth -> songs`. Following the
+plan verbatim would have made `songs` ask for a name `synth` never exports, and
+`Synth.voice` would have thrown on the first note.
+
+**The kernel cannot consume a package.** `17-music.js` uses `Synth` and
+`TRACKS`, `30-video.js` uses `Subs`, `31-reel.js` uses `Subs.parse`. Those three
+files stay in the kernel until Tasks 7 and 8 move them. The kernel is barred
+from reading `ctx.core` (build.js fails the build on it) and packages register
+*after* the kernel, so there is no legal way for kernel code to reach a package.
+Wrapping the providers first therefore strands three kernel files on names that
+have left their scope — `ReferenceError: Synth is not defined` at boot.
+
+The fix is ordering, not architecture: **consumers move out before providers
+leave.** An app may read `ctx.core`, so a consumer that moves while its provider
+is still kernel-owned is fine.
+
+- [ ] **Step 1: Move `17-music.js` to `src/apps/music/`**
+
+It becomes an app module with `register(ctx)` that registers into `APPS.music`
+and reads `Synth` and `TRACKS` from `ctx.core` — both are still kernel names at
+this point. Do not declare `deps` yet; there is nothing to depend on.
+Move its CSS out of `14-music-video.css` and `09-paint-media.css` into
+`src/apps/music/music.css`, keeping `.mdStage{flex:1;height:auto;min-height:180px}`
+with the rules it corrects.
+
+- [ ] **Step 2: Move `30-video.js` to `src/apps/video/` and `31-reel.js` to `src/packages/reel/`**
+
+Same treatment. `reel` becomes a package exporting `{ Reel }`; `apps/video`
+reads `Reel` and `Subs` from `ctx.core` for now. Move the `.vd*`, fullscreen and
+music/video CSS into the respective folders.
+
+- [ ] **Step 3: Verify the kernel no longer references any name it is losing**
+
+Run `node build.js --check`. The return-list parity check is the instrument for
+this: it fails if a name left the kernel but is still returned, or vice versa.
+Then confirm the kernel's core name count dropped by exactly the moved names and
+that nothing undefined remains.
+
+- [ ] **Step 4: Browser check**
+
+Boot to "NEXUS OS ready", open Music and Video, confirm the track library loads
+and the reel renders, console clean. `test-isolation` must report a non-zero
+converted-module count.
+
+- [ ] **Step 5: Commit and push**
+
+```bash
+git add -A && git commit -m "refactor: music, video and reel leave the kernel" && git push origin main
+```
+
+---
+
+### Task 5b: `packages/synth`, `packages/songs`, `packages/subtitles`
+
+Only possible after Task 5. Now that no kernel file references `Synth`,
+`TRACKS`, `INSTRUMENTS`, `Reel` or `Subs`, those names may leave the kernel.
 
 **Files:**
 - Create: `src/packages/synth/entry.js` (from `src/kernel/28-synth.js`)
 - Create: `src/packages/songs/data.js` (from `src/kernel/29-songs.js`)
 - Create: `src/packages/subtitles/entry.js` (from `src/kernel/32-subtitles.js`)
-- Modify: `src/manifest.js`, delete the three kernel files
+- Modify: `src/manifest.js`; `src/apps/music/entry.js`; `src/apps/video/entry.js`; delete the three kernel files
 
 **Interfaces:**
-- Consumes: `ctx.core` (Task 2).
-- Produces: registry entries `synth` exporting `{ Synth }`, `songs` exporting `{ TRACKS, INSTRUMENTS }`, `subtitles` exporting `{ Subs }`. `songs` declares `deps: ['synth']`.
+- Consumes: `ctx.core`; `ctx.use` for the declared edge.
+- Produces: `synth` exporting `{ Synth }` with `deps: ['songs']`; `songs` exporting `{ TRACKS, INSTRUMENTS }`; `subtitles` exporting `{ Subs }`. `apps/music` and `apps/video` switch their reads from `ctx.core` to `ctx.use('synth')` / `ctx.use('songs')` / `ctx.use('reel')` / `ctx.use('subtitles')`.
 
-- [ ] **Step 1: Move and declare the dependencies**
+- [ ] **Step 1: Declare the edge the way the code actually has it**
 
-`songs` genuinely needs `INSTRUMENTS` from `synth`, which the current file order gave for free. Declare it and read it via `ctx.use('synth')`.
-
-- [ ] **Step 2: Update the manifest, delete the old kernel files**
+`INSTRUMENTS` lives in `songs` and is used by `synth`, so the manifest reads:
 
 ```js
 packages: [
-  { id:'synth', dir:'packages/synth', deps:[], files:['entry.js'] },
-  { id:'songs', dir:'packages/songs', deps:['synth'], files:['data.js'] },
-  { id:'subtitles', dir:'packages/subtitles', deps:[], files:['entry.js'] },
+  { id:'songs',     dir:'packages/songs',     deps:[],        files:['data.js'] },
+  { id:'synth',     dir:'packages/synth',     deps:['songs'], files:['entry.js'] },
+  { id:'subtitles', dir:'packages/subtitles', deps:[],        files:['entry.js'] },
 ],
 ```
 
-- [ ] **Step 3: Run `npm test`**
+`synth` reads `const { INSTRUMENTS } = ctx.use('songs')`. Note the shape for the
+record: the engine depends on the content, not the other way round. That is what
+the source says. If the synth is ever reused with different content, `INSTRUMENTS`
+should split into its own package at that point — not now.
 
-Expected: green. `test-songs` still reads raw files at this point — Task 6 teaches it to read the packages through the real bundle.
+- [ ] **Step 2: Point the consumers at `ctx.use`**
 
-- [ ] **Step 4: Commit and push**
+`apps/music` declares `deps: ['synth','songs']`; `apps/video` declares
+`deps: ['reel','subtitles']`. Both stop reading those five names from `ctx.core`.
+
+- [ ] **Step 3: Prove the contract**
+
+Show `ctx.use('songs')` resolving inside `synth`, and show an undeclared id
+throwing `undeclared dependency`. The kernel core count must fall by the five
+moved names with the return-list parity still green.
+
+- [ ] **Step 4: Run `npm test` and a browser check**
+
+All guards green. Boot, open Music and Video, confirm the track library plays and
+the reel renders with chapters and subtitles, console clean.
+
+- [ ] **Step 5: Commit and push**
 
 ```bash
 git add -A && git commit -m "refactor: synth, songs and subtitles become packages" && git push origin main

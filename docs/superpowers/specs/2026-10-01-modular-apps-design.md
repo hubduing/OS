@@ -109,9 +109,18 @@ folder.
 register themselves into `APPS` and return nothing.
 
 ```js
-/* packages/synth/entry.js */
+/* packages/songs/data.js — the content */
 register(ctx) {
-  const { Audio2 } = ctx.core;
+  const INSTRUMENTS = { /* … */ };
+  const TRACKS = [ /* … */ ];
+  return { INSTRUMENTS, TRACKS };
+}
+```
+
+```js
+/* packages/synth/entry.js — the engine */
+register(ctx) {
+  const { INSTRUMENTS } = ctx.use('songs');
   const Synth = { /* … */ };
   return { Synth };
 }
@@ -125,6 +134,24 @@ register(ctx) {
   APPS.music = { /* … */ };
 }
 ```
+
+Note the shape, because it is the opposite of what intuition suggests: the engine
+depends on the content, not the other way round. `INSTRUMENTS` is declared with
+the tracks and consumed by the synthesiser. If the synth is ever reused with
+different content, `INSTRUMENTS` should split into its own package at that point.
+
+### Ordering: consumers leave the kernel before providers do
+
+The kernel is barred from reading `ctx.core`, and packages register *after* the
+kernel, so **kernel code can never reach a package.** A provider therefore
+cannot leave the kernel while any kernel file still uses it — that strands the
+consumer on a name that has left its scope.
+
+So the migration order is: move the consumers out first (an app may read
+`ctx.core`, so a consumer moving while its provider is still kernel-owned is
+fine), then extract the providers. A guard against this in reverse: the
+build-time return-list parity check fails if a name left the kernel but is still
+returned, or is still returned but has left.
 
 `GAMES`, `buildSnake` and `buildRacer` are the concrete case of this rule. Today
 `22-arcade.js` reaches into globals that `23-game-snake.js` and
