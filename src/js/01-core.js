@@ -2,6 +2,33 @@
 
 
 
+/* ============================================================
+   THE KERNEL IS ONE MODULE WITH ONE register().
+   ============================================================
+   This opening brace and the closing one at the bottom of 32-subtitles.js
+   bracket ALL 32 kernel files into a single function body. They share one
+   lexical scope, exactly as they did as bare top-level statements, because
+   they still are: the files are concatenated in filename order inside one
+   generated wrapper, and this is one brace pair across that concatenation.
+
+   Why not one register() per file: they reference each other across file
+   boundaries. 02-storage.js calls VFS, which 04-vfs.js declares. 10-taskbar-
+   start.js calls WM and Diag, declared in 08 and 21. 27-api-boot.js calls
+   most of the rest. Splitting per file would force every early file to reach
+   a name declared in a LATER file, which is the one thing a per-file register
+   cannot do.
+
+   Why this register does NOT read the ctx it is handed: ctx.core is assembled
+   from what THIS register returns, and the builder only stores that after the
+   call returns. A read here would either throw, or - worse - see a core
+   assembled from a registry that is still empty. build.js --check fails the
+   build if any kernel file reads it, so the rule cannot rot. The kernel
+   reaches its own names lexically; only packages and apps destructure.
+
+   The return at the bottom of 32-subtitles.js is the checklist: ctx.core is
+   validated at boot against the KERNEL_NAMES literal build.js injects, and a
+   name declared here but not returned there fails by name. */
+function register(ctx) {
 "use strict";
 /* ============================================================
    NEXUS OS

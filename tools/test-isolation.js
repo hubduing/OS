@@ -5,7 +5,15 @@
 //
 // Cases 1-3 and 5 run against throwaway module bodies, so they are unaffected by
 // the state of src/js. Case 4 scans the real tree and prints how many modules it
-// checked, so a refactor that quietly reduces that to zero is visible.
+// checked and how many are converted, so a refactor that quietly reduces that to
+// zero is visible.
+//
+// The kernel is exempt from this contract, and case 4 says so in its own
+// comments rather than leaving it to be inferred: the kernel is ONE module with
+// ONE register() sharing ONE lexical scope, so it reaches its own names lexically
+// and is forbidden from reading ctx.core at all. `node build.js --check` is what
+// enforces that side. This guard is for packages and apps, which are the modules
+// that DO hand themselves names by destructuring.
 //
 // Run:  node tools/test-isolation.js
 'use strict';
@@ -16,7 +24,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const manifestLib = require('./lib/manifest');
 const { kernelNames, CTX_FILE: BOOT_FILE } = require('./lib/kernel-names');
-const { declaredFrom, violations, staleNames, ctxCoreReads } = require('./lib/isolation');
+const { declaredFrom, destructures, violations, staleNames, ctxCoreReads } = require('./lib/isolation');
 
 let failures = 0;
 function check(n, what, fn) {
@@ -104,41 +112,39 @@ check(4, 'every collected module is checked against the real kernel list', () =>
   assert(stale.length === 0,
     'ctx.core would carry undefined names: ' + stale.join(', '));
 
-  // Scan each module. Until Task 3 the kernel files are bare statements with no
-  // ctx.core destructuring, so they legitimately reach every kernel name; there
-  // is nothing for this to catch yet, and saying so plainly beats a green that
-  // implies the tree was checked against a contract it does not have yet.
+  // Scan each module. A module that hands itself kernel names by destructuring
+  // ctx.core is held to the contract: it must not reach a name its own
+  // destructuring line did not list. A module that destructures nothing is
+  // pre-conversion, and its references are expected.
   let checked = 0;
   const undeclared = [];
   for (const [id, group] of modules) {
     const body = group.map(f => fs.readFileSync(f.abs, 'utf8')).join('\n');
     const given = declaredFrom(body);
-    const found = violations(body, names, given);
     checked++;
 
-    // A module that destructures is held to the contract. One that destructures
-    // nothing is pre-conversion, and its references are expected.
-    if (given.size === 0) continue;
+    if (!destructures(body)) continue;
 
     // Scanned per file, so a finding names the file it is in rather than an
     // offset into a concatenation of several.
     //
-    // Only files that THEMSELVES destructure ctx.core are enforced. Until Task 3
-    // the 33 kernel files are one shared scope that reaches each other's names
-    // by design, and 02-storage legitimately calls VFS which 04-vfs defines.
-    // Enforcing across the whole kernel module would report that pre-existing
-    // coupling instead of the one thing this guard is for: a CONVERTED module
-    // reaching a name its own destructuring line did not list. Task 3 gives each
-    // kernel file its own register(), at which point every file is converted
-    // and this filter stops hiding anything.
+    // Only files that THEMSELVES destructure ctx.core are enforced. The 32
+    // kernel files are ONE module with ONE register() sharing one lexical
+    // scope, so they reach each other's names by design and none of them
+    // destructures ctx.core at all - build.js --check FAILS the build if a
+    // kernel file reads it. Enforcing them here would report exactly the
+    // coupling that ruling preserves. So the kernel is exempt from this guard,
+    // and the exemption is stated rather than implied by a filter: the kernel's
+    // contract is "no ctx.core read, and return every name you declare", and
+    // both halves are enforced elsewhere.
     for (const f of group) {
       if (f.file === BOOT_FILE) continue;
       const text = fs.readFileSync(f.abs, 'utf8');
-      const ownGiven = declaredFrom(text);
-      if (ownGiven.size === 0) continue;
+      if (!destructures(text)) continue;
       // The file's own destructuring PLUS the module's: a converted file may
       // destructure in one file of its folder and use in another, since they
       // share one scope. `register` is exempt per file, not per module.
+      const ownGiven = declaredFrom(text);
       for (const v of violations(text, names, new Set([...given, ...ownGiven]))) {
         undeclared.push(f.id + '/' + f.file + ':' + v.line + ' -> ' + v.name);
       }
@@ -149,12 +155,16 @@ check(4, 'every collected module is checked against the real kernel list', () =>
     'module reached a kernel name it did not destructure:\n        ' +
     undeclared.slice(0, 20).join('\n        '));
 
+  // A module counts as converted once it declares a register(), which is what
+  // the builder's wrapper requires. The kernel is one module and counts once
+  // however many files it spans.
   const converted = [...modules.values()].filter(g =>
-    declaredFrom(g.map(f => fs.readFileSync(f.abs, 'utf8')).join('\n')).size > 0).length;
+    /(?:^|[^\w.$])(?:function\s+register\b|(?:const|let|var)\s+register\s*=|register\s*\(\s*ctx\s*\)\s*\{)/m
+      .test(g.map(f => fs.readFileSync(f.abs, 'utf8')).join('\n'))).length;
   console.log('      modules checked: ' + checked + '/' + modules.size +
     '  kernel names: ' + names.length +
     '  converted: ' + converted +
-    (converted === 0 ? ' (none destructure ctx.core yet, so nothing to enforce)' : ''));
+    (converted === 0 ? ' (no module declares a register yet)' : ''));
 });
 
 /* -- 5. I3: a kernel file must not read ctx.core ----------------------------- */

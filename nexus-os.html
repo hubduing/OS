@@ -1078,6 +1078,33 @@ const KERNEL_CTX = {
 
 
 
+/* ============================================================
+   THE KERNEL IS ONE MODULE WITH ONE register().
+   ============================================================
+   This opening brace and the closing one at the bottom of 32-subtitles.js
+   bracket ALL 32 kernel files into a single function body. They share one
+   lexical scope, exactly as they did as bare top-level statements, because
+   they still are: the files are concatenated in filename order inside one
+   generated wrapper, and this is one brace pair across that concatenation.
+
+   Why not one register() per file: they reference each other across file
+   boundaries. 02-storage.js calls VFS, which 04-vfs.js declares. 10-taskbar-
+   start.js calls WM and Diag, declared in 08 and 21. 27-api-boot.js calls
+   most of the rest. Splitting per file would force every early file to reach
+   a name declared in a LATER file, which is the one thing a per-file register
+   cannot do.
+
+   Why this register does NOT read the ctx it is handed: ctx.core is assembled
+   from what THIS register returns, and the builder only stores that after the
+   call returns. A read here would either throw, or - worse - see a core
+   assembled from a registry that is still empty. build.js --check fails the
+   build if any kernel file reads it, so the rule cannot rot. The kernel
+   reaches its own names lexically; only packages and apps destructure.
+
+   The return at the bottom of 32-subtitles.js is the checklist: ctx.core is
+   validated at boot against the KERNEL_NAMES literal build.js injects, and a
+   name declared here but not returned there fails by name. */
+function register(ctx) {
 "use strict";
 /* ============================================================
    NEXUS OS
@@ -8303,6 +8330,45 @@ const Subs={
     return out;
   }
 };
+
+/* ============================================================
+   WHAT THE KERNEL EXPORTS - and the end of its register().
+   ============================================================
+   The closing brace of the `function register(ctx) {` opened at the top of
+   01-core.js. Everything between the two is the 32 kernel files, sharing one
+   lexical scope, exactly as when they were bare top-level statements.
+
+   This return is what ctx.core IS. build.js injects a KERNEL_NAMES literal
+   derived from the same column-0 scan that produced this list, and
+   KERNEL_CTX.__kernelDone() refuses to open ctx.core until the assembled core
+   covers every one of them. A name declared above but absent here fails at
+   boot, by name, not later as one undefined service in one app.
+
+   That is why the list is written out in full rather than assembled: it is the
+   checklist for the conversion, and it is the only place a kernel name is
+   declared to the outside world. Keep it in sync - the boot-time error names
+   whatever is missing. */
+  return {
+    $, $$, ACCENTS, ACH_LIST, API, APPS,
+    Achievements, Audio2, BOOT_LINES, Bus, Clipboard, DAYS,
+    DEFAULT_SETTINGS, DESKTOP_APPS, Diag, EXT_ICON, Eggs, GAMES,
+    HL, ICONS, IDEAS_TEXT, INSTRUMENTS, KONAMI, LS,
+    MONTHS, NEXUS, NEXUS_FORTUNES, NEXUS_HELP, NEXUS_JOKES, NEXUS_PAGES,
+    Notify, Pinned, Reel, S, SECRET_TEXT, SETTING_CHOICES,
+    SYNTH_STEP, Subs, Synth, THEMES, TRACKS, VFS,
+    WALLPAPERS, WELCOME_TEXT, WM, Wall, ago, applySettings,
+    applyTheme, boot, buildRacer, buildSnake, cascade, clamp,
+    clockTimer, closeCtx, closeDialog, confirmBox, ctxMenu, ctxOutside,
+    dialog, dismiss, el, esc, extOf, filePicker,
+    finishBoot, firstRunIntro, fmtBytes, fmtDateShort, fmtDay, fmtDayLong,
+    fmtDur, fmtHM, fmtHMS, fmtStamp, formatLap, glitch,
+    hexA, iconForNode, init, isImageNode, kIdx, konami,
+    launchLine, lockScreen, modalResolve, openCtx, pad, prompt2,
+    random, renderDesktop, renderDesktopFiles, renderStart, renderTray, resolveApp,
+    screenshot, setSetting, showProps, shutdown, startClock, startOpen,
+    storageBytes, tile, toast, toggleStart, trackStorage, typeName,
+  };
+}
 
   try {
     __exports = register(KERNEL_CTX);

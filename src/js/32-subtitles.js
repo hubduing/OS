@@ -81,3 +81,42 @@ const Subs={
     return out;
   }
 };
+
+/* ============================================================
+   WHAT THE KERNEL EXPORTS - and the end of its register().
+   ============================================================
+   The closing brace of the `function register(ctx) {` opened at the top of
+   01-core.js. Everything between the two is the 32 kernel files, sharing one
+   lexical scope, exactly as when they were bare top-level statements.
+
+   This return is what ctx.core IS. build.js injects a KERNEL_NAMES literal
+   derived from the same column-0 scan that produced this list, and
+   KERNEL_CTX.__kernelDone() refuses to open ctx.core until the assembled core
+   covers every one of them. A name declared above but absent here fails at
+   boot, by name, not later as one undefined service in one app.
+
+   That is why the list is written out in full rather than assembled: it is the
+   checklist for the conversion, and it is the only place a kernel name is
+   declared to the outside world. Keep it in sync - the boot-time error names
+   whatever is missing. */
+  return {
+    $, $$, ACCENTS, ACH_LIST, API, APPS,
+    Achievements, Audio2, BOOT_LINES, Bus, Clipboard, DAYS,
+    DEFAULT_SETTINGS, DESKTOP_APPS, Diag, EXT_ICON, Eggs, GAMES,
+    HL, ICONS, IDEAS_TEXT, INSTRUMENTS, KONAMI, LS,
+    MONTHS, NEXUS, NEXUS_FORTUNES, NEXUS_HELP, NEXUS_JOKES, NEXUS_PAGES,
+    Notify, Pinned, Reel, S, SECRET_TEXT, SETTING_CHOICES,
+    SYNTH_STEP, Subs, Synth, THEMES, TRACKS, VFS,
+    WALLPAPERS, WELCOME_TEXT, WM, Wall, ago, applySettings,
+    applyTheme, boot, buildRacer, buildSnake, cascade, clamp,
+    clockTimer, closeCtx, closeDialog, confirmBox, ctxMenu, ctxOutside,
+    dialog, dismiss, el, esc, extOf, filePicker,
+    finishBoot, firstRunIntro, fmtBytes, fmtDateShort, fmtDay, fmtDayLong,
+    fmtDur, fmtHM, fmtHMS, fmtStamp, formatLap, glitch,
+    hexA, iconForNode, init, isImageNode, kIdx, konami,
+    launchLine, lockScreen, modalResolve, openCtx, pad, prompt2,
+    random, renderDesktop, renderDesktopFiles, renderStart, renderTray, resolveApp,
+    screenshot, setSetting, showProps, shutdown, startClock, startOpen,
+    storageBytes, tile, toast, toggleStart, trackStorage, typeName,
+  };
+}

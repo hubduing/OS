@@ -184,10 +184,17 @@ check(6, 'the real injected KERNEL_NAMES is enforced, not just a fixture', () =>
 
   const ctx = bootstrap(names, kernelIds);
 
-  // Nothing is converted yet: the kernel exports no register() at all, so this
-  // must fail. The message is capped, so what is checked is that the COUNT is
-  // the real one and that every name it does show is a real kernel name - a
+  // This case exercises the BOOTSTRAP, not the kernel: only CTX_FILE is
+  // evaluated here, so the registry is empty and __kernelDone must refuse to
+  // publish a core. That is still the right thing to assert - it proves the
+  // injected literal is load-bearing against the REAL name list rather than a
+  // fixture. The message is capped, so what is checked is that the COUNT is the
+  // real one and that every name it does show is a real kernel name - a
   // fixture-driven count would pass case 2 just as happily.
+  //
+  // It says nothing about whether the kernel actually returns those names; that
+  // is what the real bundle does at boot, and `node build.js --check` plus a boot
+  // run are what cover it.
   const e = assertThrows(() => ctx.__kernelDone(), /ctx\.core/, 'the unconverted tree');
   assert(e.message.includes('missing ' + names.length + ' of the ' + names.length),
     'the count is not the real kernel list: ' + e.message);
@@ -199,7 +206,7 @@ check(6, 'the real injected KERNEL_NAMES is enforced, not just a fixture', () =>
     assert(names.includes(n), 'listed a name that is not in the real kernel list: ' + n);
   }
   console.log('      kernel names enforced: ' + names.length +
-    ' - all of them missing until Task 3 converts the kernel');
+    ' - the bootstrap refuses an empty core; the kernel supplies them at boot');
 });
 
 if (failures) {

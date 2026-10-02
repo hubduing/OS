@@ -25,6 +25,15 @@
      - `APPS.music = {...}` is an assignment to a member, not a declaration, and
        is not picked up: the name pattern requires `NAME =` with nothing but
        whitespace before the `=`.
+      - `register` is dropped (ENTRY, below): it is the entry point, not a
+        service.
+
+   The kernel is ONE module with ONE register(), whose opening brace is at the top
+   of 01-core.js and whose closing brace and `return` are at the bottom of
+   32-subtitles.js. The 30 files in between are NOT indented, and must not be:
+   this scan is column-0 anchored, so indenting them would make the list EMPTY
+   rather than wrong — the one failure this file cannot detect on its own. One
+   brace pair spanning the concatenation is what keeps that shared scope.
 
    The scan is regex-based on purpose. It has no dependencies and no parser, and
    it errs toward naming too few names rather than inventing ones: a name it
@@ -40,6 +49,16 @@ const manifest = require('./manifest');
 /* The bootstrap file lives inside the kernel folder and declares the plumbing,
    not a service. Left in the list it would ask ctx.core for itself. */
 const CTX_FILE = '00-kernel-ctx.js';
+
+/* `register` is the module's own entry point, not a service it provides: the
+   generated wrapper calls it and keeps what it RETURNS, so a name it declares
+   at column 0 describes the plumbing rather than the kernel's surface.
+   tools/lib/isolation.js already treats it this way when it exempts a module's
+   own register from the undeclared-reference scan; this is the same decision on
+   the other side of the contract, and the two have to agree — a `register` in
+   KERNEL_NAMES with no matching entry in the kernel's return would fail at boot
+   naming a name nobody can supply. */
+const ENTRY = 'register';
 
 /* The two literals build.js replaces in CTX_FILE. If either drifts from the
    file, the build fails rather than shipping an empty ctx.core. */
@@ -134,12 +153,14 @@ function kernelNames(root) {
   const names = [];
   for (const f of fs.readdirSync(abs).filter(f => f.endsWith('.js')).sort()) {
     if (f === CTX_FILE) continue;
-    names.push(...declaredNames(fs.readFileSync(path.join(abs, f), 'utf8')));
+    for (const n of declaredNames(fs.readFileSync(path.join(abs, f), 'utf8'))) {
+      if (n !== ENTRY) names.push(n);
+    }
   }
   return [...new Set(names)].sort();
 }
 
 module.exports = {
   kernelNames, declaredNames, splitDeclarators,
-  CTX_FILE, INJECT_MARK, INJECT_IDS_MARK,
+  CTX_FILE, ENTRY, INJECT_MARK, INJECT_IDS_MARK,
 };

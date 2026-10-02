@@ -21,6 +21,8 @@ const ID = '[A-Za-z_$][\\w$]*';
    Returns the local names the module was actually given. */
 const DESTRUCTURE_G = /(?:const|let|var)\s*\{([^}]*)\}\s*=\s*ctx\.core/g;
 const DESTRUCTURE_1 = /(?:const|let|var)\s*\{[^}]*\}\s*=\s*ctx\.core/;
+/* The same shape, deliberately NOT /g — see destructures(). */
+const DESTRUCTURE_TEST = /(?:const|let|var)\s*\{[^}]*\}\s*=\s*ctx\.core/;
 
 function declaredFrom(body) {
   const given = new Set();
@@ -153,6 +155,31 @@ function violations(body, names, given) {
   return out;
 }
 
+/* Does this body actually HANDS ITSELF kernel names, by destructuring ctx.core?
+
+   declaredFrom() answers a different question - "which names does this body
+   legitimately reach" - and it also counts a `function register(`, which is not
+   a hand-over at all. A guard that decides "is this module converted?" from
+   declaredFrom() therefore reads the kernel as converted, and then holds it to a
+   contract the kernel must never meet: the kernel is ONE module sharing ONE
+   scope, so it reaches its own names lexically, and ctx.core is not even open
+   until it has registered. build.js fails the build on that (the I3 scan), and
+   this function exists so the isolation guard does not demand the opposite of
+   it.
+
+   Kept beside DESTRUCTURE_G so the definition of "destructures ctx.core" is
+   written down once.
+
+   NOT DESTRUCTURE_G.test(): that regex is /g, and .test() on a global regex
+   carries lastIndex between calls, so the same body alternates true and false
+   and the guard silently skips whichever module it happens to call it on next.
+   A non-global twin, which has no state to carry. matchAll() above is the
+   state-free way to read DESTRUCTURE_G, and there is no matchAll equivalent of
+   .test() that does not allocate. */
+function destructures(body) {
+  return DESTRUCTURE_TEST.test(body);
+}
+
 /* A `/* ... *\/` that opens and closes on ONE line. commentMask only knows the
    column-0 banner style, so an inline block comment was still read as code -
    which meant a kernel file documenting the "a kernel never reads ctx.core" rule
@@ -207,5 +234,6 @@ function ctxCoreReads(body) {
 }
 
 module.exports = {
-  declaredFrom, violations, staleNames, stripStrings, referenceRe, codeLines, ctxCoreReads,
+  declaredFrom, destructures, violations, staleNames,
+  stripStrings, referenceRe, codeLines, ctxCoreReads,
 };
