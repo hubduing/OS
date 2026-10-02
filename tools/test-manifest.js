@@ -172,11 +172,11 @@ check(7, 'the real src/manifest.js loads and every listed file exists', () => {
   const m = lib.load(ROOT);
   const files = lib.collect(ROOT);
   const fsList = fs
-    .readdirSync(path.join(ROOT, 'src', 'js'))
+    .readdirSync(path.join(ROOT, m.kernel.dir))
     .filter(f => f.endsWith('.js'))
     .sort();
   assert(files.length === fsList.length,
-    'collect() returned ' + files.length + ' files, src/js holds ' + fsList.length);
+    'collect() returned ' + files.length + ' files, ' + m.kernel.dir + ' holds ' + fsList.length);
   assert(
     files.map(f => f.file).join(',') === fsList.join(','),
     'collect() order was ' + files.map(f => f.file).join(',')
@@ -224,9 +224,37 @@ check(8, 'a declared src/apps/calculator does not make src/apps an orphan', () =
   assert(/rogue/.test(e.message), 'message was ' + e.message);
 });
 
+/* 9. the real layout: the kernel has moved, and the containers exist -------- */
+check(9, 'the kernel is src/kernel, src/js is gone, and the containers exist', () => {
+  const m = lib.load(ROOT);
+  assert(m.kernel.dir === 'src/kernel',
+    'kernel.dir is ' + m.kernel.dir + ' - expected src/kernel');
+  assert(!fs.existsSync(path.join(ROOT, 'src', 'js')),
+    'src/js still exists - the tree move is half done');
+  assert(fs.existsSync(path.join(ROOT, 'src', 'kernel')) &&
+    fs.statSync(path.join(ROOT, 'src', 'kernel')).isDirectory(),
+    'src/kernel does not exist');
+
+  // Phase 0 has no modules yet, so "every apps/ and packages/ dir is listed"
+  // has nothing to check; what it CAN check is that both containers are real
+  // directories the manifest is prepared to point into. load() has already
+  // refused anything unaccounted for, so an empty container is not an orphan.
+  for (const c of ['packages', 'apps']) {
+    const dir = path.join(ROOT, 'src', c);
+    assert(fs.existsSync(dir) && fs.statSync(dir).isDirectory(), 'src/' + c + ' does not exist');
+    assert(lib.collect(ROOT).length > 0, 'collect() returned no modules');
+  }
+
+  // cssLate must name a file that exists, and it must resolve against the same
+  // root `dir` does - otherwise the last stylesheet silently stops shipping.
+  for (const rel of m.cssLate) {
+    assert(fs.existsSync(path.join(ROOT, rel)), 'cssLate entry ' + rel + ' does not exist');
+  }
+});
+
 if (failures) {
   console.log('\n' + failures + ' case(s) failed');
   process.exitCode = 1;
 } else {
-  console.log('\n8/8 manifest cases pass');
+  console.log('\n9/9 manifest cases pass');
 }

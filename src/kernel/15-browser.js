@@ -119,7 +119,6 @@ tree /</pre>
       <pre style="background:#0e1424;color:#c8d6ee;padding:18px;border-radius:12px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;border:1px solid #1e2a44">${esc(n.content)}</pre>
       <button class="btnG" style="margin-top:18px" data-open="editor" data-path="${esc(path)}">Open in editor</button></div></div>`}}
 };
-function formatLap(ms){const s=ms/1000;return Math.floor(s/60)+':'+(s%60).toFixed(3).padStart(6,'0')}
 APPS.browser={
   title:'Browser',icon:ICONS.browser,desc:'NexusBrowser',w:940,h:640,
   build(w,opts){

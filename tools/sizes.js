@@ -4,6 +4,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const manifest = require('./lib/manifest');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -19,7 +20,9 @@ function walk(dir, out = []) {
 
 function report() {
   const rows = [];
-  for (const sub of ['src/css', 'src/js']) {
+  // JS and CSS are both in the kernel directory now; the manifest names it, so
+  // listing src/css and src/js here just printed nothing after the move.
+  for (const sub of [manifest.load(ROOT).kernel.dir]) {
     const dir = path.join(ROOT, sub);
     if (!fs.existsSync(dir)) continue;
     let subTotal = 0;

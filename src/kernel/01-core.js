@@ -6,7 +6,7 @@
    THE KERNEL IS ONE MODULE WITH ONE register().
    ============================================================
    This opening brace and the closing one at the bottom of 32-subtitles.js
-   bracket ALL 32 kernel files into a single function body. They share one
+   bracket every kernel file into a single function body. They share one
    lexical scope, exactly as they did as bare top-level statements, because
    they still are: the files are concatenated in filename order inside one
    generated wrapper, and this is one brace pair across that concatenation.

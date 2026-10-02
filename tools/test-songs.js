@@ -13,8 +13,24 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const SRC = path.join(__dirname, '..', 'src', 'js');
+// The kernel directory comes from the manifest, never from a literal path:
+// it moved from src/js to src/kernel, and a hardcoded one made this guard read
+// a directory that no longer exists -- which, with readdirSync, is an exception
+// rather than a silent pass, but still the wrong kind of coupling.
+const manifest = require('./lib/manifest');
+
+const ROOT = path.resolve(__dirname, '..');
+const SRC = path.join(ROOT, manifest.load(ROOT).kernel.dir);
 const files = ['28-synth.js', '29-songs.js'];
+
+// Loud: the two files below are hand-named, so a rename would make this guard
+// evaluate nothing and still print a table. Refuse before that happens.
+for (const f of files) {
+  if (!fs.existsSync(path.join(SRC, f))) {
+    console.error(`FAIL  ${f} is not in ${manifest.load(ROOT).kernel.dir} - the guard would check nothing`);
+    process.exit(1);
+  }
+}
 
 const sandbox = { Audio2: { on: () => true, bus: null, ctx: null }, console, Math, Object, Array };
 vm.createContext(sandbox);

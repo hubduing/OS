@@ -1,4 +1,4 @@
-// Exercises the real module bootstrap - src/js/00-kernel-ctx.js, the shipped
+// Exercises the real module bootstrap - src/kernel/00-kernel-ctx.js, the shipped
 // file, not a paraphrase of it - inside a vm sandbox, the way the bundle runs.
 //
 // The bootstrap is where the module contract lives, and two of its guarantees
@@ -192,9 +192,11 @@ check(6, 'the real injected KERNEL_NAMES is enforced, not just a fixture', () =>
   // real one and that every name it does show is a real kernel name - a
   // fixture-driven count would pass case 2 just as happily.
   //
-  // It says nothing about whether the kernel actually returns those names; that
-  // is what the real bundle does at boot, and `node build.js --check` plus a boot
-  // run are what cover it.
+  // It says nothing about whether the kernel actually returns those names. That
+  // half is covered at BUILD time instead: build.js --check reads the
+  // hand-written return list off the last kernel file and refuses to emit when
+  // it and this list disagree, so a name added above and forgotten below fails
+  // `node build.js --check` by name rather than the browser.
   const e = assertThrows(() => ctx.__kernelDone(), /ctx\.core/, 'the unconverted tree');
   assert(e.message.includes('missing ' + names.length + ' of the ' + names.length),
     'the count is not the real kernel list: ' + e.message);

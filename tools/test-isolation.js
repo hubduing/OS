@@ -4,9 +4,9 @@
 // repo would notice; this guard is what makes the contract real.
 //
 // Cases 1-3 and 5 run against throwaway module bodies, so they are unaffected by
-// the state of src/js. Case 4 scans the real tree and prints how many modules it
-// checked and how many are converted, so a refactor that quietly reduces that to
-// zero is visible.
+// the state of the kernel tree. Case 4 scans the real tree and prints how many
+// modules it checked and how many are converted, so a refactor that quietly
+// reduces that to zero is visible.
 //
 // The kernel is exempt from this contract, and case 4 says so in its own
 // comments rather than leaving it to be inferred: the kernel is ONE module with
@@ -128,15 +128,17 @@ check(4, 'every collected module is checked against the real kernel list', () =>
     // Scanned per file, so a finding names the file it is in rather than an
     // offset into a concatenation of several.
     //
-    // Only files that THEMSELVES destructure ctx.core are enforced. The 32
-    // kernel files are ONE module with ONE register() sharing one lexical
-    // scope, so they reach each other's names by design and none of them
-    // destructures ctx.core at all - build.js --check FAILS the build if a
-    // kernel file reads it. Enforcing them here would report exactly the
-    // coupling that ruling preserves. So the kernel is exempt from this guard,
-    // and the exemption is stated rather than implied by a filter: the kernel's
-    // contract is "no ctx.core read, and return every name you declare", and
-    // both halves are enforced elsewhere.
+    // Only files that THEMSELVES destructure ctx.core are enforced. The kernel
+    // files are ONE module with ONE register() sharing one lexical scope, so
+    // they reach each other's names by design and none of them destructures
+    // ctx.core at all - build.js --check FAILS the build if a kernel file reads
+    // it. Enforcing them here would report exactly the coupling that ruling
+    // preserves. So the kernel is exempt from this guard, and the exemption is
+    // stated rather than implied by a filter: the kernel's contract is "no
+    // ctx.core read, and return every name you declare", and both halves are
+    // enforced in build.js --check — the first by the ctx-core-read scan, the
+    // second by returnedNames() comparing the hand-written return list against
+    // this very KERNEL_NAMES list.
     for (const f of group) {
       if (f.file === BOOT_FILE) continue;
       const text = fs.readFileSync(f.abs, 'utf8');

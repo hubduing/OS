@@ -5,8 +5,17 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+const manifest = require('./lib/manifest');
+
 const ROOT = path.resolve(__dirname, '..');
-const target = path.join(ROOT, 'src', 'js', '14-calculator.js');
+// Resolved through the manifest so the move from src/js to src/kernel does not
+// quietly turn "clean build succeeds" into "the target no longer exists" — a
+// writeFileSync to a missing path would throw here instead of testing anything.
+const target = path.join(ROOT, manifest.load(ROOT).kernel.dir, '14-calculator.js');
+if (!fs.existsSync(target)) {
+  console.error('FAIL  no such module: ' + target);
+  process.exit(1);
+}
 const original = fs.readFileSync(target, 'utf8');
 
 function tryBuild() {

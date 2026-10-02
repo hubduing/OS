@@ -19,24 +19,6 @@ function setSetting(k,v){
   applySettings();
   return true;
 }
-function applySettings(){
-  const r=document.documentElement.style;
-  r.setProperty('--accent',S.accent);
-  r.setProperty('--accent2',S.accent2);
-  r.setProperty('--opacity',(S.transparency/100).toFixed(2));
-  r.setProperty('--blur',Math.round(10+(S.transparency/100)*14));
-  r.setProperty('--icon-size',({small:'64px',medium:'88px',large:'112px'}[S.iconSize]||'88px'));
-  r.setProperty('--taskbar-pos',S.taskbarPos);
-  const tb=$('#taskbar');
-  const moved=S.taskbarPos==='top';
-  if(moved){tb.style.top='0px';tb.style.bottom='auto';tb.style.flexDirection='row-reverse'}
-  else{tb.style.top='auto';tb.style.bottom='0px';tb.style.flexDirection='row'}
-  if(document.body.dataset.tbpos!==S.taskbarPos){document.body.dataset.tbpos=S.taskbarPos;WM.reflow()}
-  document.body.classList.toggle('no-anim',!S.animations);
-  Audio2.setVol(S.volume);
-  startClock();
-  if(document.body.dataset.theme!==S.theme){document.body.dataset.theme=S.theme;applyTheme(S.theme)}
-}
 const THEMES={
   nexus:{label:'Nexus (dark)',bg:'#05070d',win:'rgba(14,18,30,.78)',text:'#e8f1ff',muted:'#8ea0bd',sidebar:'rgba(0,0,0,.16)',bar:'rgba(8,12,22,.62)'},
   midnight:{label:'Midnight Blue',bg:'#030610',win:'rgba(12,22,44,.80)',text:'#dce9ff',muted:'#7f96bd',sidebar:'rgba(0,4,14,.2)',bar:'rgba(6,12,28,.66)'},

@@ -86,7 +86,7 @@ const Subs={
    WHAT THE KERNEL EXPORTS - and the end of its register().
    ============================================================
    The closing brace of the `function register(ctx) {` opened at the top of
-   01-core.js. Everything between the two is the 32 kernel files, sharing one
+   01-core.js. Everything between the two is the kernel files, sharing one
    lexical scope, exactly as when they were bare top-level statements.
 
    This return is what ctx.core IS. build.js injects a KERNEL_NAMES literal
@@ -97,8 +97,10 @@ const Subs={
 
    That is why the list is written out in full rather than assembled: it is the
    checklist for the conversion, and it is the only place a kernel name is
-   declared to the outside world. Keep it in sync - the boot-time error names
-   whatever is missing. */
+   declared to the outside world. Keep it in sync - and note that build.js
+   --check now READS this literal and refuses to emit a bundle when it and the
+   KERNEL_NAMES scan disagree, so a name added above and forgotten here fails
+   the build by name instead of the boot. */
   return {
     $, $$, ACCENTS, ACH_LIST, API, APPS,
     Achievements, Audio2, BOOT_LINES, Bus, Clipboard, DAYS,

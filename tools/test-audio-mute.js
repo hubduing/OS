@@ -14,22 +14,137 @@
  *   3. Nothing outside the audio module may connect a node to
  *      ctx.destination -- everything routes through Audio2.master.
  *
+ * The file list comes from the MANIFEST, not from a hardcoded src/js: the tree
+ * moved to src/kernel and this guard used to read a path that no longer exists.
+ * A guard that reads zero files finds zero problems and says "ok", which is the
+ * failure mode this now refuses outright (see the loud checks below).
+ *
+ * Subsystem classification is by manifest id. Phase 1 gives each subsystem its
+ * own module; until then they are all inside the single `kernel` module, so the
+ * role table below also carries a filename, resolved against the manifest's own
+ * kernel.dir. Phase 1 replaces the filename column with the id column and the
+ * ids become the only key. Both columns are checked against the manifest, so a
+ * rename that misses this table fails here instead of silently un-checking a
+ * whole subsystem.
+ *
  * Usage: node tools/test-audio-mute.js
  */
 const fs = require('fs');
 const path = require('path');
 
-const SRC = process.argv[2]
-  ? path.resolve(process.argv[2])
-  : path.join(__dirname, '..', 'src', 'js');
-const AUDIO_MODULE = '03-audio.js';
-const files = fs.readdirSync(SRC).filter(f => f.endsWith('.js'));
-const isGame = f => /-game-/.test(f);
-const isMedia = f => /(?:^|\d+-)(?:music|video|reel)\.js$/.test(f);
-const isSynth = f => /-synth\.js$/.test(f);
+const manifest = require('./lib/manifest');
+
+const ROOT = path.resolve(__dirname, '..');
+
+/* The audio module. Keyed to the manifest id Phase 1 will give it; today the
+   kernel is one module, so the file name inside the kernel directory is the
+   fallback. Either way it is resolved FROM the manifest, and its absence is a
+   failure rather than an empty check. */
+const AUDIO_ID = 'kernel-audio';
+const AUDIO_FILE = '03-audio.js';
+
+/* role -> manifest ids that carry it (Phase 1) OR the kernel filename that
+   does today. The id list wins when such a module exists; the file name is
+   only consulted inside the kernel module. */
+const ROLES = {
+  game:  { ids: ['game-snake', 'game-racer', 'arcade'], files: ['22-arcade.js', '23-game-snake.js', '24-game-racer.js'] },
+  media: { ids: ['music', 'video'], files: ['17-music.js', '30-video.js', '31-reel.js'] },
+  synth: { ids: ['synth'], files: ['28-synth.js'] },
+};
+
+/* ---- the file list, from the manifest ------------------------------------ */
 
 const failures = [];
 const fail = (file, msg) => failures.push(`${file}: ${msg}`);
+
+let collected, loaded;
+try {
+  collected = manifest.collect(ROOT);
+  loaded = manifest.load(ROOT);
+} catch (e) {
+  console.error('audio mute guard: FAIL\n');
+  console.error('  - cannot read the manifest: ' + e.message);
+  console.error('\n1 problem(s)');
+  process.exit(1);
+}
+
+// Loud: a guard that read nothing would otherwise report "ok" on a tree it
+// never looked at. This is the difference between "the audio code is correct"
+// and "there is no audio code".
+if (!collected.length) {
+  console.error('audio mute guard: FAIL\n');
+  console.error('  - collect() returned 0 modules, so every check below is vacuous');
+  console.error('\n1 problem(s)');
+  process.exit(1);
+}
+
+const byId = new Map();
+for (const f of collected) {
+  if (!byId.has(f.id)) byId.set(f.id, []);
+  byId.get(f.id).push(f);
+}
+
+// Every .js on disk under every declared module directory must be in `files`.
+// collect() already refuses a stray, but this repeats the assertion in the
+// guard's own terms: if a future change makes collect() lenient, the guard
+// fails rather than checking a subset.
+const declaredDirs = [...new Set(collected.map(f => f.dir))];
+const claimed = new Set(collected.map(f => path.resolve(f.abs)));
+const unaccounted = [];
+for (const dir of declaredDirs) {
+  const abs = path.join(ROOT, dir);
+  if (!fs.existsSync(abs)) { unaccounted.push(`${dir} (directory does not exist)`); continue; }
+  for (const f of fs.readdirSync(abs).filter(f => f.endsWith('.js'))) {
+    const p = path.resolve(path.join(abs, f));
+    if (!claimed.has(p)) unaccounted.push(`${dir}/${f}`);
+  }
+}
+
+const audioMod = byId.get(AUDIO_ID);
+const audioFile = audioMod
+  ? audioMod[0].file
+  : (byId.get('kernel') || []).map(f => f.file).find(f => f === AUDIO_FILE);
+
+if (!audioFile) {
+  failures.push(`manifest: no audio module — expected id "${AUDIO_ID}", or ` +
+    `${loaded.kernel.dir}/${AUDIO_FILE} inside the kernel module. Without it ` +
+    `checks 1 and 2 cannot run.`);
+}
+
+const files = collected.map(f => ({ file: f.file, id: f.id, abs: f.abs }));
+
+/* Is this file in `role`? By id when the manifest has such a module, else by
+   filename inside the kernel module. A name in the table that matches nothing
+   on disk is reported rather than ignored — that is how a rename would
+   otherwise un-check a subsystem silently. */
+const roleNames = new Map();
+for (const [role, spec] of Object.entries(ROLES)) {
+  const hits = new Set();
+  for (const id of spec.ids) {
+    if (byId.has(id)) for (const f of byId.get(id)) hits.add(f.abs);
+  }
+  if (hits.size === 0) {
+    const kernel = byId.get('kernel') || [];
+    for (const name of spec.files) {
+      const f = kernel.find(k => k.file === name);
+      if (f) hits.add(f.abs);
+      else {
+        failures.push(`${loaded.kernel.dir}/${name}: the ${role} role names it but ` +
+          `no such file is in the manifest (ids ${spec.ids.join(', ')} do not ` +
+          `exist yet either)`);
+      }
+    }
+  }
+  roleNames.set(role, hits);
+}
+const isGame  = (f) => roleNames.get('game').has(f.abs);
+const isMedia = (f) => roleNames.get('media').has(f.abs);
+const isSynth = (f) => roleNames.get('synth').has(f.abs);
+
+if (unaccounted.length) {
+  failures.push(`manifest: ${unaccounted.length} .js file(s) on disk are not in ` +
+    `any module's files list: ${unaccounted.slice(0, 8).join(', ')}`);
+}
 
 // Split the argument list of a call starting at the opening paren index.
 function args(src, open) {
@@ -72,10 +187,10 @@ function eachCall(src, re, fn) {
   }
 }
 
-for (const file of files) {
-  const src = fs.readFileSync(path.join(SRC, file), 'utf8');
+for (const { file, abs } of files) {
+  const src = fs.readFileSync(abs, 'utf8');
 
-  if (file === AUDIO_MODULE) {
+  if (file === audioFile) {
     // 1. the gate must exist and be consulted by both entry points
     if (!/on\(cat\)\s*\{\s*if\(S\.volume<=0\)return false;/.test(src))
       fail(file, 'on(cat) must return false when S.volume is zero');
@@ -102,7 +217,7 @@ for (const file of files) {
   }
 
   // 2. media sounds must declare their category
-  if (isMedia(file)) {
+  if (isMedia({ file, abs })) {
     eachCall(src, /Audio2\.(tone|noise)\(/g, (m, open) => {
       const a = args(src, open);
       const line = src.slice(0, m.index).split('\n').length;
@@ -114,7 +229,7 @@ for (const file of files) {
 
   // 2b. the synthesiser must honour the media gate, or "Media sounds" off
   //     does nothing for the built-in library while still muting local files
-  if (isSynth(file)) {
+  if (isSynth({ file, abs })) {
     if (!/Audio2\.on\('media'\)/.test(src))
       fail(file, 'synth voices must be gated on Audio2.on(\'media\') or the Media sounds toggle will not silence them');
     if (!/Audio2\.bus|Audio2\.input\(\)/.test(src))
@@ -127,6 +242,14 @@ for (const file of files) {
     const line = src.slice(0, m.index).split('\n').length;
     fail(file, `line ${line}: connects to ${m[1]}.destination — audio must go through the Audio2 bus so the volume slider applies`);
   });
+}
+
+// Loud: a category check that matched nothing means the guard stopped checking
+// the subsystem it exists for. Every role must have found at least one file.
+for (const role of ['game', 'media', 'synth']) {
+  if (roleNames.get(role).size === 0) {
+    failures.push(`no file was classified as "${role}" — checks 2/2b are vacuous`);
+  }
 }
 
 if (failures.length) {

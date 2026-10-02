@@ -4,10 +4,10 @@
    The bundle is one shared global scope, so "the kernel surface" is literally
    "the names the kernel files declare at top level". This module derives that
    list from the directory the MANIFEST names (`kernel.dir`), never from a
-   hardcoded path: the tree moves from src/js to src/kernel later, and a path
-   baked in here would make this file wrong the moment it did.
+   hardcoded path: the tree has now moved from src/js to src/kernel, and a path
+   baked in here would have made this file wrong the moment it did.
 
-   build.js injects the result into the kernel bootstrap (src/js/00-kernel-ctx.js
+   build.js injects the result into the kernel bootstrap (src/kernel/00-kernel-ctx.js
    as of this tree; the path follows manifest.kernel.dir, not this comment) as a
    literal array, so the builder is the single source of truth. Nothing here
    defines a runtime global and nothing in the bundle recomputes the list — the
@@ -30,7 +30,7 @@
 
    The kernel is ONE module with ONE register(), whose opening brace is at the top
    of 01-core.js and whose closing brace and `return` are at the bottom of
-   32-subtitles.js. The 30 files in between are NOT indented, and must not be:
+   32-subtitles.js. The files in between are NOT indented, and must not be:
    this scan is column-0 anchored, so indenting them would make the list EMPTY
    rather than wrong — the one failure this file cannot detect on its own. One
    brace pair spanning the concatenation is what keeps that shared scope.
@@ -160,7 +160,128 @@ function kernelNames(root) {
   return [...new Set(names)].sort();
 }
 
+/* -- the return list ------------------------------------------------------- */
+
+/* The names the kernel's register() RETURNS, read off the object literal at the
+   bottom of the last kernel file.
+
+   This is the other half of the kernel contract, and until now only the boot
+   enforced it: `const Foo = {}` added to the kernel makes kernelNames() grow,
+   the injected KERNEL_NAMES literal grow with it, `--check` stays green, and
+   the failure arrives in the browser as "ctx.core is missing 1 of 109 kernel
+   name(s): Foo". build.js calls this and compares the two lists, so the gap is
+   a build error naming Foo instead.
+
+   It PARSES the literal rather than evaluating it: the returned names are
+   identifiers only in scope inside register(), so evaluating it here would mean
+   fabricating a scope, and a fabricated scope is a place for the check to
+   quietly disagree with the browser. The parse is exact - brace-matched to the
+   literal's own closing brace, split on top-level commas only, so a nested
+   object or an array cannot be mistaken for a key - and it refuses to guess
+   when the literal is not where it expects: an unparseable return is a failure,
+   never an empty list that would compare equal to nothing.
+
+   `body` is the kernel module's concatenated source, minus the bootstrap file
+   (which is emitted outside the wrapper and has no return). */
+function returnedNames(body) {
+  const OPEN = /\breturn\s*\{/g;
+  let at = -1, m;
+  while ((m = OPEN.exec(body)) !== null) at = m.index + m[0].length - 1;
+
+  if (at === -1) {
+    throw new Error(
+      'the kernel body has no `return {` - register() must return the object ' +
+      'literal that IS ctx.core, or the kernel exports nothing at all'
+    );
+  }
+
+  // Brace-match from the opening brace, quote- and comment-aware: an unbalanced
+  // count inside a string or a regex literal is not a brace.
+  let depth = 0, quote = '', lineComment = false;
+  for (let i = at; i < body.length; i++) {
+    const c = body[i];
+    if (lineComment) { if (c === '\n') lineComment = false; continue; }
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = '';
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
+    if (c === '/' && body[i + 1] === '/') { lineComment = true; continue; }
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        const inner = body.slice(at + 1, i);
+        const names = [];
+        for (const part of splitDeclarators(inner)) {
+          // A trailing comma yields an empty final segment. Legal JS, and the
+          // list is hand-written across 20 lines, so it is skipped rather than
+          // treated as an unreadable entry - but ONLY when blank. `...spread`
+          // or a computed key still fails, because it is not blank.
+          if (!part.trim()) continue;
+          // `NAME` shorthand and `NAME: expr` both name NAME; anything else is
+          // a computed or spread key, which this list must not contain.
+          const k = /^\s*('?[A-Za-z_$][\w$]*'?)\s*(?::|$)/.exec(part);
+          if (!k) {
+            throw new Error(
+              'the kernel return list has an entry build.js cannot read a name ' +
+              'from: ' + JSON.stringify(part.trim()) + '. Write it as a bare ' +
+              '`Name` or `Name: expr`'
+            );
+          }
+          names.push(k[1].replace(/'/g, ''));
+        }
+        return [...new Set(names)];
+      }
+    }
+  }
+  throw new Error('the kernel return literal is never closed - build.js cannot read it');
+}
+
+/* The two lists, compared as SETS. Both directions are failures: a name
+   declared and not returned is a gap in ctx.core, and a name returned that
+   nothing declares is a typo that ships as a permanently undefined property -
+   or, worse, as a ReferenceError in the return itself that only the browser
+   finds. Capped in the message, because the kernel has 108 names and printing
+   all of them helps nobody. */
+function returnParity(names, returned) {
+  const have = new Set(returned);
+  const want = new Set(names);
+  const missing = names.filter(n => !have.has(n));
+  const extra = returned.filter(n => !want.has(n));
+  return { missing, extra };
+}
+
+function describeParity(names, p) {
+  const CAP = 12;
+  const fmt = (list) => {
+    const shown = list.slice(0, CAP).join(', ');
+    return list.length > CAP ? shown + ', +' + (list.length - CAP) + ' more' : shown;
+  };
+  const parts = [];
+  if (p.missing.length) {
+    parts.push(
+      'declared at column 0 in the kernel but ABSENT from the return list at the ' +
+      'bottom of the last kernel file: ' + fmt(p.missing)
+    );
+  }
+  if (p.extra.length) {
+    parts.push(
+      'in the return list but declared nowhere in the kernel: ' + fmt(p.extra) +
+      ' (a typo ships as a permanently undefined ctx.core property, or throws ' +
+      'inside register())'
+    );
+  }
+  return (
+    'the kernel return list and the generated KERNEL_NAMES scan disagree (' +
+    names.length + ' scanned). ' + parts.join('. ') + '. The return list IS ' +
+    'ctx.core, and it has to cover every name the kernel declares exactly once.'
+  );
+}
+
 module.exports = {
   kernelNames, declaredNames, splitDeclarators,
+  returnedNames, returnParity, describeParity,
   CTX_FILE, ENTRY, INJECT_MARK, INJECT_IDS_MARK,
 };

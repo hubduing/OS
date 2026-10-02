@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Recovers src/js + src/css from the last successful build.
+/* Recovers the JS + CSS from the last successful build.
    Use when a split goes wrong: the built single file is the source of truth.
 
    Usage:  node tools/extract.js                                               */
@@ -10,7 +10,11 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'nexus-os.html'), 'utf8');
 
-const BANNER = /\n\/\* ={60,}\n   [A-Z0-9 -]+\n   src\/(css|js)\/[^ \n]+\n   ={60,} \*\/\n\n/g;
+// Any src/ sub-path, not just css/js: build.js prints the path relative to src/
+// for whatever directory a file actually came from, and both now live in
+// src/kernel. Hardcoding the two old names made the banner regex stop matching,
+// so recovery silently kept the banners in the recovered files.
+const BANNER = /\n\/\* ={60,}\n   [A-Z0-9 -]+\n   src\/[^ \n]+\n   ={60,} \*\/\n\n/g;
 const STAMP = /<!-- Built by build\.js[^>]*-->\n/g;
 
 function extract(re, label) {

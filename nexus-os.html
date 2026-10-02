@@ -9,8 +9,8 @@
 
 
 /* ==================================================================
-   BASE
-   src/css/01-base.css
+   KERNEL/01-BASE
+   src/kernel/01-base.css
    ================================================================== */
 
 /* ============================================================
@@ -52,8 +52,8 @@ input,textarea,select{outline:none}
 
 
 /* ==================================================================
-   BOOT-WALL
-   src/css/02-boot-wall.css
+   KERNEL/02-BOOT-WALL
+   src/kernel/02-boot-wall.css
    ================================================================== */
 
 /* ---------- BOOT ---------- */
@@ -94,8 +94,8 @@ input,textarea,select{outline:none}
 
 
 /* ==================================================================
-   DESKTOP
-   src/css/03-desktop.css
+   KERNEL/03-DESKTOP
+   src/kernel/03-desktop.css
    ================================================================== */
 
 /* ---------- DESKTOP ---------- */
@@ -152,8 +152,8 @@ input,textarea,select{outline:none}
 
 
 /* ==================================================================
-   START-WINDOWS
-   src/css/04-start-windows.css
+   KERNEL/04-START-WINDOWS
+   src/kernel/04-start-windows.css
    ================================================================== */
 
 /* ---------- START MENU ---------- */
@@ -237,8 +237,8 @@ input,textarea,select{outline:none}
 
 
 /* ==================================================================
-   UI-COMMON
-   src/css/05-ui-common.css
+   KERNEL/05-UI-COMMON
+   src/kernel/05-ui-common.css
    ================================================================== */
 
 /* ---------- GENERIC UI ---------- */
@@ -334,8 +334,8 @@ option{background:#101626}
 
 
 /* ==================================================================
-   FILES-TERM
-   src/css/06-files-term.css
+   KERNEL/06-FILES-TERM
+   src/kernel/06-files-term.css
    ================================================================== */
 
 /* ---------- FILE MANAGER ---------- */
@@ -386,8 +386,8 @@ option{background:#101626}
 
 
 /* ==================================================================
-   EDITOR-CALC
-   src/css/07-editor-calc.css
+   KERNEL/07-EDITOR-CALC
+   src/kernel/07-editor-calc.css
    ================================================================== */
 
 /* ---------- EDITOR ---------- */
@@ -442,8 +442,8 @@ option{background:#101626}
 
 
 /* ==================================================================
-   BROWSER
-   src/css/08-browser.css
+   KERNEL/08-BROWSER
+   src/kernel/08-browser.css
    ================================================================== */
 
 /* ---------- BROWSER ---------- */
@@ -500,8 +500,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   PAINT-MEDIA
-   src/css/09-paint-media.css
+   KERNEL/09-PAINT-MEDIA
+   src/kernel/09-paint-media.css
    ================================================================== */
 
 /* ---------- PAINT ---------- */
@@ -553,8 +553,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   GAMES
-   src/css/10-games.css
+   KERNEL/10-GAMES
+   src/kernel/10-games.css
    ================================================================== */
 
 /* ---------- GAMES ---------- */
@@ -592,8 +592,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   SETTINGS-AI
-   src/css/11-settings-ai.css
+   KERNEL/11-SETTINGS-AI
+   src/kernel/11-settings-ai.css
    ================================================================== */
 
 /* ---------- SETTINGS ---------- */
@@ -651,8 +651,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   ACHV-DIAG
-   src/css/12-achv-diag.css
+   KERNEL/12-ACHV-DIAG
+   src/kernel/12-achv-diag.css
    ================================================================== */
 
 /* ---------- ACHIEVEMENTS ---------- */
@@ -697,42 +697,8 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 
 /* ==================================================================
-   RESPONSIVE
-   src/css/13-responsive.css
-   ================================================================== */
-
-/* ---------- RESPONSIVE ---------- */
-@media (max-width:900px){
-  .fmSide,.stSide{width:132px}
-  .nxCore{flex-basis:130px}
-  #nxOrb{width:92px;height:92px}
-  .mdList{width:150px}
-  .ptSide{width:120px}
-  #start{width:340px}
-}
-@media (max-width:640px){
-  :root{--icon-size:66px;--taskbar-h:48px}
-  #taskbar{height:48px;padding:0 5px;gap:3px}
-  #searchBtn span,#startBtn b{display:none}
-  #startBtn{padding:7px 9px}
-  .titem .tt{display:none}
-  .titem{min-width:38px;padding:0 8px}
-  .fmSide,.stSide,.mdList,.ptSide{display:none}
-  .nxCore{display:none}
-  .dicon .ico{width:34px;height:34px}
-  .msg{max-width:92%}
-  #notifWrap{width:calc(100vw - 24px)}
-  .calcVal{font-size:27px}
-}
-@media (max-height:560px){
-  #icons{gap:2px}
-  .dicon{padding:6px 3px 4px}
-}
-
-
-/* ==================================================================
-   MUSIC-VIDEO
-   src/css/14-music-video.css
+   KERNEL/14-MUSIC-VIDEO
+   src/kernel/14-music-video.css
    ================================================================== */
 
 /* ============================================================
@@ -840,6 +806,40 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 .vdStage:fullscreen{border-radius:0}
 .vdStage:fullscreen .vdSubs{bottom:42px;font-size:26px}
 .vdStage:-webkit-full-screen{border-radius:0}
+
+
+/* ==================================================================
+   KERNEL/13-RESPONSIVE
+   src/kernel/13-responsive.css
+   ================================================================== */
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:900px){
+  .fmSide,.stSide{width:132px}
+  .nxCore{flex-basis:130px}
+  #nxOrb{width:92px;height:92px}
+  .mdList{width:150px}
+  .ptSide{width:120px}
+  #start{width:340px}
+}
+@media (max-width:640px){
+  :root{--icon-size:66px;--taskbar-h:48px}
+  #taskbar{height:48px;padding:0 5px;gap:3px}
+  #searchBtn span,#startBtn b{display:none}
+  #startBtn{padding:7px 9px}
+  .titem .tt{display:none}
+  .titem{min-width:38px;padding:0 8px}
+  .fmSide,.stSide,.mdList,.ptSide{display:none}
+  .nxCore{display:none}
+  .dicon .ico{width:34px;height:34px}
+  .msg{max-width:92%}
+  #notifWrap{width:calc(100vw - 24px)}
+  .calcVal{font-size:27px}
+}
+@media (max-height:560px){
+  #icons{gap:2px}
+  .dicon{padding:6px 3px 4px}
+}
 </style>
 </head>
 <body class="">
@@ -921,7 +921,7 @@ table.tbl td{padding:9px 11px;border-bottom:1px solid #e8edf5;color:#33405a}
 
 /* ==================================================================
    KERNEL-CTX
-   src/js/00-kernel-ctx.js
+   src/kernel/00-kernel-ctx.js
    ================================================================== */
 
 "use strict";
@@ -1062,7 +1062,7 @@ const KERNEL_CTX = {
   },
 };
 
-/* MODULE: kernel  dir: src/js */
+/* MODULE: kernel  dir: src/kernel */
 (function () {
   'use strict';
   KERNEL_CTX.__deps = [];
@@ -1071,7 +1071,7 @@ const KERNEL_CTX = {
 
 /* ==================================================================
    CORE
-   src/js/01-core.js
+   src/kernel/01-core.js
    ================================================================== */
 
 
@@ -1082,7 +1082,7 @@ const KERNEL_CTX = {
    THE KERNEL IS ONE MODULE WITH ONE register().
    ============================================================
    This opening brace and the closing one at the bottom of 32-subtitles.js
-   bracket ALL 32 kernel files into a single function body. They share one
+   bracket every kernel file into a single function body. They share one
    lexical scope, exactly as they did as bare top-level statements, because
    they still are: the files are concatenated in filename order inside one
    generated wrapper, and this is one brace pair across that concatenation.
@@ -1218,8 +1218,70 @@ const typeName=n=>{const e=extOf(n.name);return n.type==='dir'?'Folder':(e?e.toU
 
 
 /* ==================================================================
+   REGISTRY
+   src/kernel/01-registry.js
+   ================================================================== */
+
+/* ============================================================
+   KERNEL REGISTRY — the three names every module may reach for
+   ============================================================
+   APPS is the app table the whole desktop is built from. It lived at the
+   top of 11-files.js, which made it look like the Files app owned it —
+   it did not: fourteen modules fill it and nothing reads it there. The
+   application registry is kernel infrastructure, so it is declared here,
+   at the top of the shared scope, where the file name says what it is.
+
+   formatLap renders a lap time. It is a kernel service for the same
+   reason: two game modules format laps with it, so it is a shared name
+   rather than one app's private helper.
+
+   applySettings pushes S into every service that renders from it. It was
+   declared by the settings app and CALLED BY THE BOOT SEQUENCE, which
+   meant the boot path depended on a name an app happened to declare.
+   It dispatches only to kernel services, so the ownership is the
+   kernel's and the settings app is one consumer among others.
+
+   Ordering is load-bearing. This file sorts AFTER 01-core.js, which is
+   where `function register(ctx) {` opens, and BEFORE every file that
+   uses these names. A `00-` prefix would put it before that brace and
+   leave it in the wrapper's own scope, where it cannot reach Wall, WM,
+   Diag, Audio2 or applyTheme — they are declared inside register()'s
+   body, so applySettings would throw ReferenceError the first time
+   settings were applied. The prefix is 01 for that reason and no other.
+   ============================================================ */
+const APPS={};
+
+/* Elapsed millis as M:SS.mmm — the lap-time readout for both games. Pure,
+   so it belongs to the kernel rather than to whichever game calls it. */
+function formatLap(ms){const s=ms/1000;return Math.floor(s/60)+':'+(s%60).toFixed(3).padStart(6,'0')}
+
+/* Push the settings object S into every service that renders from it:
+   CSS custom properties, the taskbar, the window manager, audio volume
+   and the clock. Called by the settings app on every change AND by the
+   boot sequence before the first frame. */
+function applySettings(){
+  const r=document.documentElement.style;
+  r.setProperty('--accent',S.accent);
+  r.setProperty('--accent2',S.accent2);
+  r.setProperty('--opacity',(S.transparency/100).toFixed(2));
+  r.setProperty('--blur',Math.round(10+(S.transparency/100)*14));
+  r.setProperty('--icon-size',({small:'64px',medium:'88px',large:'112px'}[S.iconSize]||'88px'));
+  r.setProperty('--taskbar-pos',S.taskbarPos);
+  const tb=$('#taskbar');
+  const moved=S.taskbarPos==='top';
+  if(moved){tb.style.top='0px';tb.style.bottom='auto';tb.style.flexDirection='row-reverse'}
+  else{tb.style.top='auto';tb.style.bottom='0px';tb.style.flexDirection='row'}
+  if(document.body.dataset.tbpos!==S.taskbarPos){document.body.dataset.tbpos=S.taskbarPos;WM.reflow()}
+  document.body.classList.toggle('no-anim',!S.animations);
+  Audio2.setVol(S.volume);
+  startClock();
+  if(document.body.dataset.theme!==S.theme){document.body.dataset.theme=S.theme;applyTheme(S.theme)}
+}
+
+
+/* ==================================================================
    STORAGE
-   src/js/02-storage.js
+   src/kernel/02-storage.js
    ================================================================== */
 
 /* ============================================================
@@ -1262,7 +1324,7 @@ const ACCENTS=['#37e0ff','#b06bff','#ff4d9d','#3ddc84','#ffc857','#ff6b35','#6fb
 
 /* ==================================================================
    AUDIO
-   src/js/03-audio.js
+   src/kernel/03-audio.js
    ================================================================== */
 
 /* Sound routing.
@@ -1368,7 +1430,7 @@ document.addEventListener('keydown',()=>Audio2.resume(),{once:true});
 
 /* ==================================================================
    VFS
-   src/js/04-vfs.js
+   src/kernel/04-vfs.js
    ================================================================== */
 
 const VFS={
@@ -1624,7 +1686,7 @@ const SECRET_TEXT=`you found the file the shell told you not to look for.
 
 /* ==================================================================
    UI-SERVICES
-   src/js/05-ui-services.js
+   src/kernel/05-ui-services.js
    ================================================================== */
 
 const Bus={
@@ -1736,7 +1798,7 @@ $('#trayBat').innerHTML=ICONS.bat;
 
 /* ==================================================================
    ACHIEVEMENTS
-   src/js/06-achievements.js
+   src/kernel/06-achievements.js
    ================================================================== */
 
 const ACH_LIST=[
@@ -1801,7 +1863,7 @@ const Achievements={
 
 /* ==================================================================
    WALLPAPER
-   src/js/07-wallpaper.js
+   src/kernel/07-wallpaper.js
    ================================================================== */
 
 /* ============================================================
@@ -2073,7 +2135,7 @@ function hexA(hex,a){
 
 /* ==================================================================
    WINDOW-MANAGER
-   src/js/08-window-manager.js
+   src/kernel/08-window-manager.js
    ================================================================== */
 
 const WM={
@@ -2400,7 +2462,7 @@ function closeCtx(){if(openCtx){openCtx.remove();openCtx=null;document.removeEve
 
 /* ==================================================================
    DESKTOP
-   src/js/09-desktop.js
+   src/kernel/09-desktop.js
    ================================================================== */
 
 const DESKTOP_APPS=[
@@ -2539,7 +2601,7 @@ const Pinned={
 
 /* ==================================================================
    TASKBAR-START
-   src/js/10-taskbar-start.js
+   src/kernel/10-taskbar-start.js
    ================================================================== */
 
 let clockTimer=null;
@@ -2742,13 +2804,12 @@ function lockScreen(){
 
 /* ==================================================================
    FILES
-   src/js/11-files.js
+   src/kernel/11-files.js
    ================================================================== */
 
 /* ============================================================
    PART 4 — APPS: FILES, TERMINAL, EDITOR
    ============================================================ */
-const APPS={};
 
 /* ---------- FILES ---------- */
 APPS.files={
@@ -3032,7 +3093,7 @@ APPS.files={
 
 /* ==================================================================
    TERMINAL
-   src/js/12-terminal.js
+   src/kernel/12-terminal.js
    ================================================================== */
 
 APPS.terminal={
@@ -3490,7 +3551,7 @@ APPS.terminal={
 
 /* ==================================================================
    EDITOR
-   src/js/13-editor.js
+   src/kernel/13-editor.js
    ================================================================== */
 
 const HL={
@@ -3787,7 +3848,7 @@ function filePicker(startDir){
 
 /* ==================================================================
    CALCULATOR
-   src/js/14-calculator.js
+   src/kernel/14-calculator.js
    ================================================================== */
 
 /* ============================================================
@@ -3929,7 +3990,7 @@ APPS.calculator={
 
 /* ==================================================================
    BROWSER
-   src/js/15-browser.js
+   src/kernel/15-browser.js
    ================================================================== */
 
 const NEXUS_PAGES={
@@ -4053,7 +4114,6 @@ tree /</pre>
       <pre style="background:#0e1424;color:#c8d6ee;padding:18px;border-radius:12px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;border:1px solid #1e2a44">${esc(n.content)}</pre>
       <button class="btnG" style="margin-top:18px" data-open="editor" data-path="${esc(path)}">Open in editor</button></div></div>`}}
 };
-function formatLap(ms){const s=ms/1000;return Math.floor(s/60)+':'+(s%60).toFixed(3).padStart(6,'0')}
 APPS.browser={
   title:'Browser',icon:ICONS.browser,desc:'NexusBrowser',w:940,h:640,
   build(w,opts){
@@ -4213,7 +4273,7 @@ APPS.browser={
 
 /* ==================================================================
    PAINT
-   src/js/16-paint.js
+   src/kernel/16-paint.js
    ================================================================== */
 
 APPS.paint={
@@ -4412,7 +4472,7 @@ function isImageNode(n){return n&&n.type==='file'&&(n.dataUrl||n.mime&&n.mime.st
 
 /* ==================================================================
    MUSIC
-   src/js/17-music.js
+   src/kernel/17-music.js
    ================================================================== */
 
 /* ============================================================
@@ -4737,7 +4797,7 @@ APPS.music={
 
 /* ==================================================================
    SETTINGS
-   src/js/18-settings.js
+   src/kernel/18-settings.js
    ================================================================== */
 
 /* ============================================================
@@ -4760,24 +4820,6 @@ function setSetting(k,v){
   S[k]=v;LS.set('settings',S);
   applySettings();
   return true;
-}
-function applySettings(){
-  const r=document.documentElement.style;
-  r.setProperty('--accent',S.accent);
-  r.setProperty('--accent2',S.accent2);
-  r.setProperty('--opacity',(S.transparency/100).toFixed(2));
-  r.setProperty('--blur',Math.round(10+(S.transparency/100)*14));
-  r.setProperty('--icon-size',({small:'64px',medium:'88px',large:'112px'}[S.iconSize]||'88px'));
-  r.setProperty('--taskbar-pos',S.taskbarPos);
-  const tb=$('#taskbar');
-  const moved=S.taskbarPos==='top';
-  if(moved){tb.style.top='0px';tb.style.bottom='auto';tb.style.flexDirection='row-reverse'}
-  else{tb.style.top='auto';tb.style.bottom='0px';tb.style.flexDirection='row'}
-  if(document.body.dataset.tbpos!==S.taskbarPos){document.body.dataset.tbpos=S.taskbarPos;WM.reflow()}
-  document.body.classList.toggle('no-anim',!S.animations);
-  Audio2.setVol(S.volume);
-  startClock();
-  if(document.body.dataset.theme!==S.theme){document.body.dataset.theme=S.theme;applyTheme(S.theme)}
 }
 const THEMES={
   nexus:{label:'Nexus (dark)',bg:'#05070d',win:'rgba(14,18,30,.78)',text:'#e8f1ff',muted:'#8ea0bd',sidebar:'rgba(0,0,0,.16)',bar:'rgba(8,12,22,.62)'},
@@ -5078,7 +5120,7 @@ APPS.settings={
 
 /* ==================================================================
    COMPUTER
-   src/js/19-computer.js
+   src/kernel/19-computer.js
    ================================================================== */
 
 APPS.computer={
@@ -5161,7 +5203,7 @@ APPS.computer={
 
 /* ==================================================================
    ACHIEVEMENTS-UI
-   src/js/20-achievements-ui.js
+   src/kernel/20-achievements-ui.js
    ================================================================== */
 
 APPS.achievements={
@@ -5185,7 +5227,7 @@ APPS.achievements={
 
 /* ==================================================================
    DIAGNOSTICS
-   src/js/21-diagnostics.js
+   src/kernel/21-diagnostics.js
    ================================================================== */
 
 const Diag={
@@ -5330,7 +5372,7 @@ APPS.diagnostics={
 
 /* ==================================================================
    ARCADE
-   src/js/22-arcade.js
+   src/kernel/22-arcade.js
    ================================================================== */
 
 /* ============================================================
@@ -5425,7 +5467,7 @@ APPS.arcade={
 
 /* ==================================================================
    GAME-SNAKE
-   src/js/23-game-snake.js
+   src/kernel/23-game-snake.js
    ================================================================== */
 
 function buildSnake(w){
@@ -5732,7 +5774,7 @@ function buildSnake(w){
 
 /* ==================================================================
    GAME-RACER
-   src/js/24-game-racer.js
+   src/kernel/24-game-racer.js
    ================================================================== */
 
 function buildRacer(w){
@@ -6269,7 +6311,7 @@ function buildRacer(w){
 
 /* ==================================================================
    NEXUS
-   src/js/25-nexus.js
+   src/kernel/25-nexus.js
    ================================================================== */
 
 /* ============================================================
@@ -6655,7 +6697,7 @@ APPS.nexus={
 
 /* ==================================================================
    EGGS
-   src/js/26-eggs.js
+   src/kernel/26-eggs.js
    ================================================================== */
 
 const Eggs={
@@ -6729,7 +6771,7 @@ function glitch(){
 
 /* ==================================================================
    API-BOOT
-   src/js/27-api-boot.js
+   src/kernel/27-api-boot.js
    ================================================================== */
 
 const API={
@@ -6955,7 +6997,7 @@ else init();
 
 /* ==================================================================
    SYNTH
-   src/js/28-synth.js
+   src/kernel/28-synth.js
    ================================================================== */
 
 /* ============================================================
@@ -7175,7 +7217,7 @@ const Synth={
 
 /* ==================================================================
    SONGS
-   src/js/29-songs.js
+   src/kernel/29-songs.js
    ================================================================== */
 
 /* ============================================================
@@ -7449,7 +7491,7 @@ const TRACKS=[
 
 /* ==================================================================
    VIDEO
-   src/js/30-video.js
+   src/kernel/30-video.js
    ================================================================== */
 
 /* ============================================================
@@ -7867,7 +7909,7 @@ APPS.video={
 
 /* ==================================================================
    REEL
-   src/js/31-reel.js
+   src/kernel/31-reel.js
    ================================================================== */
 
 /* ============================================================
@@ -8244,7 +8286,7 @@ const Reel={
 
 /* ==================================================================
    SUBTITLES
-   src/js/32-subtitles.js
+   src/kernel/32-subtitles.js
    ================================================================== */
 
 /* ============================================================
@@ -8335,7 +8377,7 @@ const Subs={
    WHAT THE KERNEL EXPORTS - and the end of its register().
    ============================================================
    The closing brace of the `function register(ctx) {` opened at the top of
-   01-core.js. Everything between the two is the 32 kernel files, sharing one
+   01-core.js. Everything between the two is the kernel files, sharing one
    lexical scope, exactly as when they were bare top-level statements.
 
    This return is what ctx.core IS. build.js injects a KERNEL_NAMES literal
@@ -8346,8 +8388,10 @@ const Subs={
 
    That is why the list is written out in full rather than assembled: it is the
    checklist for the conversion, and it is the only place a kernel name is
-   declared to the outside world. Keep it in sync - the boot-time error names
-   whatever is missing. */
+   declared to the outside world. Keep it in sync - and note that build.js
+   --check now READS this literal and refuses to emit a bundle when it and the
+   KERNEL_NAMES scan disagree, so a name added above and forgotten here fails
+   the build by name instead of the boot. */
   return {
     $, $$, ACCENTS, ACH_LIST, API, APPS,
     Achievements, Audio2, BOOT_LINES, Bus, Clipboard, DAYS,

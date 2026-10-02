@@ -8,8 +8,18 @@
  */
 const fs = require('fs');
 const path = require('path');
-const SRC = path.join(__dirname, '..', 'src', 'js');
+const manifest = require('./lib/manifest');
+
+// Manifest-driven, like every other reader of the kernel tree: it moved from
+// src/js to src/kernel, and a literal path here meant readdirSync on a path
+// that no longer existed.
+const SRC = path.join(__dirname, '..', manifest.load().kernel.dir);
 const files = fs.readdirSync(SRC).filter(f => f.endsWith('.js'));
+
+if (!files.length) {
+  console.error('audit-el-args: nothing to audit - ' + SRC + ' holds no .js');
+  process.exit(1);
+}
 
 function args(src, open) {
   let depth = 0, i = open, inStr = null;

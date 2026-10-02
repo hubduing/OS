@@ -1,4 +1,4 @@
-/* Detects and repairs block comments that straddle a src/js module boundary.
+/* Detects and repairs block comments that straddle a kernel module boundary.
    A banner like
        /* ==============
           PART 2 ...
@@ -9,8 +9,10 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const manifest = require('./lib/manifest');
 
-const DIR = path.join(__dirname, '..', 'src', 'js');
+// Manifest-driven: the kernel directory moved from src/js to src/kernel.
+const DIR = path.join(__dirname, '..', manifest.load().kernel.dir);
 const dry = process.argv.includes('--dry');
 
 /* Banner comments always start at column 0 and always end with `* /` on their

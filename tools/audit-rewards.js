@@ -3,8 +3,13 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const manifest = require('./lib/manifest');
 
-const JS = path.join(__dirname, '..', 'src', 'js');
+// Manifest-driven: the kernel tree moved from src/js to src/kernel, and this
+// audit greps every source file — pointing it at a directory that no longer
+// exists reported "no triggers" for every achievement, which is indistinguishable
+// from the real answer.
+const JS = path.join(__dirname, '..', manifest.load().kernel.dir);
 const read = f => fs.readFileSync(path.join(JS, f), 'utf8');
 
 let all = '';
